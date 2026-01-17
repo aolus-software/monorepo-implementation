@@ -1,0 +1,26 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"target": "ESNext",
+		"lib": ["ESNext"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+
+		/* Bun specific */
+		"types": ["bun-types"],
+		"allowImportingTsExtensions": true,
+
+		/* Emit */
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"outDir": "./dist",
+		"noEmit": false,
+
+		/* Decorators for Elysia */
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true
+	},
+	"exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+}
