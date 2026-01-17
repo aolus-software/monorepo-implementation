@@ -1,0 +1,22 @@
+{
+	"name": "@repo/ui",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.8",
+		"@types/react-dom": "^19.2.3"
+	},
+	"peerDependencies": {
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"react": "^19.2.3",
+		"react-dom": "^19.2.3",
+		"tailwind-merge": "^3.4.0",
+		"tailwindcss": "^4.1.18"
+	}
+}
