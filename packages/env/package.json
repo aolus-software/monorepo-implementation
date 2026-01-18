@@ -1,0 +1,27 @@
+{
+	"name": "@repo/env",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"main": "./index.ts",
+	"exports": {
+		".": {
+			"types": "./index.ts",
+			"default": "./index.ts"
+		}
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"typescript": "^5.7.2"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}

@@ -23,6 +23,7 @@
         "@elysiajs/cors": "^1.4.1",
         "@elysiajs/swagger": "^1.3.1",
         "@repo/database": "workspace:*",
+        "@repo/env": "workspace:*",
         "@repo/types": "workspace:*",
         "drizzle-orm": "^0.45.1",
         "elysia": "^1.4.22",
@@ -30,6 +31,7 @@
         "postgres": "^3.4.8",
       },
       "devDependencies": {
+        "@repo/config": "workspace:*",
         "@types/bun": "latest",
         "@types/ioredis": "^5.0.0",
         "drizzle-kit": "^0.31.8",
@@ -43,10 +45,14 @@
       "dependencies": {
         "@elysiajs/cors": "^1.4.1",
         "@elysiajs/swagger": "^1.3.1",
+        "@repo/env": "workspace:*",
         "drizzle-orm": "^0.45.1",
         "elysia": "^1.4.22",
         "ioredis": "^5.9.2",
         "postgres": "^3.4.8",
+      },
+      "devDependencies": {
+        "@repo/config": "workspace:*",
       },
       "peerDependencies": {
         "typescript": "^5",
@@ -130,6 +136,20 @@
       "devDependencies": {
         "@types/bun": "latest",
         "drizzle-kit": "^0.31.8",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/env": {
+      "name": "@repo/env",
+      "version": "0.0.0",
+      "dependencies": {
+        "zod": "^3.23.8",
+      },
+      "devDependencies": {
+        "@repo/config": "workspace:*",
+        "typescript": "^5.7.2",
       },
       "peerDependencies": {
         "typescript": "^5",
@@ -400,6 +420,8 @@
     "@repo/config": ["@repo/config@workspace:packages/config"],
 
     "@repo/database": ["@repo/database@workspace:packages/database"],
+
+    "@repo/env": ["@repo/env@workspace:packages/env"],
 
     "@repo/types": ["@repo/types@workspace:packages/types"],
 
@@ -1207,7 +1229,7 @@
 
     "zhead": ["zhead@2.2.4", "", {}, "sha512-8F0OI5dpWIA5IGG5NHUg9staDwz/ZPxZtvGVf01j7vHqSyZ0raHY+78atOVxRqb73AotX22uV1pXt3gYSstGag=="],
 
-    "zod": ["zod@4.3.5", "", {}, "sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g=="],
+    "zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "zod-validation-error": ["zod-validation-error@4.0.2", "", { "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" } }, "sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ=="],
 
@@ -1250,6 +1272,8 @@
     "eslint-plugin-import/debug": ["debug@3.2.7", "", { "dependencies": { "ms": "^2.1.1" } }, "sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ=="],
 
     "eslint-plugin-react/resolve": ["resolve@2.0.0-next.5", "", { "dependencies": { "is-core-module": "^2.13.0", "path-parse": "^1.0.7", "supports-preserve-symlinks-flag": "^1.0.0" }, "bin": { "resolve": "bin/resolve" } }, "sha512-U7WjGVG9sH8tvjW5SmGbQuui75FiyjAX72HX15DwBBwF9dNiQZRQAg9nnPhYy+TUnE0+VcrttuvNI8oSxZcocA=="],
+
+    "eslint-plugin-react-hooks/zod": ["zod@4.3.5", "", {}, "sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g=="],
 
     "fast-glob/glob-parent": ["glob-parent@5.1.2", "", { "dependencies": { "is-glob": "^4.0.1" } }, "sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow=="],
 
@@ -1308,8 +1332,6 @@
     "@scalar/themes/@scalar/types/@scalar/openapi-types": ["@scalar/openapi-types@0.2.0", "", { "dependencies": { "zod": "^3.23.8" } }, "sha512-waiKk12cRCqyUCWTOX0K1WEVX46+hVUK+zRPzAahDJ7G0TApvbNkuy5wx7aoUyEk++HHde0XuQnshXnt8jsddA=="],
 
     "@scalar/themes/@scalar/types/nanoid": ["nanoid@5.1.6", "", { "bin": { "nanoid": "bin/nanoid.js" } }, "sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg=="],
-
-    "@scalar/themes/@scalar/types/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "@typescript-eslint/typescript-estree/minimatch/brace-expansion": ["brace-expansion@2.0.2", "", { "dependencies": { "balanced-match": "^1.0.0" } }, "sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ=="],
   }

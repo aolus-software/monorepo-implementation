@@ -1,39 +1,37 @@
 {
-  "name": "monorepo-implementation",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "packageManager": "bun@1.1.38",
-  "scripts": {
-    "dev": "turbo run dev",
-    "dev:web": "turbo run dev --filter='@repo/web-*'",
-    "dev:api": "turbo run dev --filter='@repo/api-*'",
-    "build": "turbo run build",
-    "build:web": "turbo run build --filter='@repo/web-*'",
-    "build:api": "turbo run build --filter='@repo/api-*'",
-    "start": "turbo run start",
-    "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate",
-    "lint": "turbo run lint",
-    "lint:fix": "turbo run lint:fix",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mjs}\" --ignore-path .gitignore",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mjs}\" --ignore-path .gitignore",
-    "typecheck": "turbo run typecheck"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "devDependencies": {
-    "@repo/config": "workspace:*",
-    "@types/bun": "latest",
-    "@typescript-eslint/eslint-plugin": "^8.53.0",
-    "@typescript-eslint/parser": "^8.53.0",
-    "eslint": "^9.39.2",
-    "prettier": "^3.8.0",
-    "turbo": "^2.7.5"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "monorepo-implementation",
+	"private": true,
+	"packageManager": "bun@1.1.38",
+	"scripts": {
+		"dev": "turbo run dev",
+		"dev:web": "turbo run dev --filter='@repo/web-*'",
+		"dev:api": "turbo run dev --filter='@repo/api-*'",
+		"build": "turbo run build",
+		"build:web": "turbo run build --filter='@repo/web-*'",
+		"build:api": "turbo run build --filter='@repo/api-*'",
+		"start": "turbo run start",
+		"db:generate": "turbo run db:generate",
+		"db:migrate": "turbo run db:migrate",
+		"lint": "turbo run lint",
+		"lint:fix": "turbo run lint:fix",
+		"format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mjs}\" --ignore-path .gitignore",
+		"format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mjs}\" --ignore-path .gitignore",
+		"typecheck": "turbo run typecheck"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"devDependencies": {
+		"@repo/config": "workspace:*",
+		"@types/bun": "latest",
+		"@typescript-eslint/eslint-plugin": "^8.53.0",
+		"@typescript-eslint/parser": "^8.53.0",
+		"eslint": "^9.39.2",
+		"prettier": "^3.8.0",
+		"turbo": "^2.7.5"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
 }

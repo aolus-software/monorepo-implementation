@@ -1,11 +1,14 @@
 {
-	"extends": "@repo/config/tsconfig.elysia.json",
+	"extends": "@repo/config/tsconfig.base.json",
 	"compilerOptions": {
-		"baseUrl": ".",
+		"module": "ESNext",
+		"target": "ESNext",
+		"moduleResolution": "bundler",
+		"types": ["bun-types"],
 		"paths": {
-			"@/*": ["./*"],
-			"@repo/database": ["../../packages/database"],
-			"@repo/types": ["../../packages/types"]
+			"@repo/env": ["../../packages/env/src/index.ts"],
+			"@repo/database": ["../../packages/database/src/index.ts"],
+			"@repo/types": ["../../packages/types/src/index.ts"]
 		}
 	},
 	"include": ["**/*.ts"],
