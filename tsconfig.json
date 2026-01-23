@@ -1,14 +1,14 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./apps/api-admin" },
-    { "path": "./apps/api-user" },
-    { "path": "./apps/web-admin" },
-    { "path": "./apps/web-user" },
-    { "path": "./packages/database" },
-    { "path": "./packages/types" },
-    { "path": "./packages/ui" },
-    { "path": "./packages/config" },
-    { "path": "./packages/env" }
-  ]
+	"files": [],
+	"references": [
+		{ "path": "./apps/api-admin" },
+		{ "path": "./apps/api-user" },
+		{ "path": "./apps/web-admin" },
+		{ "path": "./apps/web-user" },
+		{ "path": "./packages/database" },
+		{ "path": "./packages/types" },
+		{ "path": "./packages/ui" },
+		{ "path": "./packages/config" },
+		{ "path": "./packages/env" }
+	]
 }

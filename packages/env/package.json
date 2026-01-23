@@ -3,11 +3,11 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
-	"main": "./index.ts",
+	"main": "./src/index.ts",
 	"exports": {
 		".": {
-			"types": "./index.ts",
-			"default": "./index.ts"
+			"types": "./src/index.ts",
+			"default": "./src/index.ts"
 		}
 	},
 	"scripts": {

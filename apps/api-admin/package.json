@@ -1,32 +1,27 @@
 {
 	"name": "@repo/api-admin",
-	"module": "index.ts",
+	"module": "./src/index.ts",
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"dev": "bun --hot index.ts",
-		"build": "bun build index.ts --outdir=dist --target=netlify --external:@repo/database --external:@repo/types",
-		"start": "bun run index.ts",
+		"dev": "bun --hot ./src/index.ts",
+		"build": "bun build ./src/index.ts --outdir=dist --target=bun",
+		"start": "bun run ./src/index.ts",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@repo/database": "workspace:*",
-		"@repo/types": "workspace:*",
 		"@repo/env": "workspace:*",
 		"@elysiajs/cors": "^1.4.1",
 		"@elysiajs/swagger": "^1.3.1",
-		"drizzle-orm": "^0.45.1",
-		"elysia": "^1.4.22",
-		"ioredis": "^5.9.2",
-		"postgres": "^3.4.8"
+		"elysia": "^1.4.22"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
-		"@types/ioredis": "^5.0.0",
-		"@repo/config": "workspace:*",
-		"drizzle-kit": "^0.31.8"
+		"@repo/types": "workspace:*",
+		"@repo/config": "workspace:*"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
