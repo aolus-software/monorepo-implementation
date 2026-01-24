@@ -1,12 +1,23 @@
 {
-  "name": "elysia",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "@repo/elysia",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@bogeychan/elysia-logger": "^0.1.10",
+		"@elysiajs/bearer": "^1.4.2",
+		"@elysiajs/cors": "^1.4.1",
+		"@elysiajs/jwt": "^1.4.0",
+		"@elysiajs/openapi": "^1.4.14",
+		"elysia": "^1.4.22",
+		"elysia-helmet": "^3.0.0",
+		"elysia-rate-limit": "^4.4.2",
+		"pino": "^10.3.0"
+	}
 }
