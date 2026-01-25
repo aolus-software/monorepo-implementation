@@ -2,7 +2,8 @@
 
 ## Project Overview
 
-This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple applications and shared packages.
+This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
+applications and shared packages.
 
 ### Architecture
 
@@ -13,12 +14,14 @@ This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
 ### Applications
 
 #### API Applications (Elysia)
+
 - `apps/api-admin` - Admin API service
 - `apps/api-user` - User-facing API service
 - **Framework**: Elysia.js (modern TypeScript web framework for Bun)
 - **Runtime**: Bun
 
 #### Web Applications (Next.js)
+
 - `apps/web-admin` - Admin dashboard
 - `apps/web-user` - User-facing web app
 - **Framework**: Next.js 16 with App Router
@@ -36,6 +39,7 @@ This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
 ## Code Style and Best Practices
 
 ### TypeScript
+
 - Use strict TypeScript configuration
 - Always define proper types, avoid `any`
 - Use type inference where appropriate
@@ -43,6 +47,7 @@ This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
 - Use Zod for runtime validation
 
 ### Backend (Elysia)
+
 - Use functional patterns and composition
 - Implement clean architecture principles
 - Keep route handlers thin, move logic to services
@@ -52,6 +57,7 @@ This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
 - Document API endpoints with Swagger decorators
 
 ### Frontend (Next.js)
+
 - Use Server Components by default, Client Components when needed
 - Implement proper loading and error states
 - Use React Query for data fetching and caching
@@ -62,13 +68,16 @@ This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
 - Prefer composition over prop drilling
 
 ### Database (Drizzle ORM)
+
 - Define schemas in `packages/database/src/schema`
-- Use migrations for schema changes (`bun run db:generate`, `bun run db:migrate`)
+- Use migrations for schema changes (`bun run db:generate`,
+  `bun run db:migrate`)
 - Use the Drizzle query builder, avoid raw SQL unless necessary
 - Always use transactions for multi-step operations
 - Index frequently queried columns
 
 ### Styling
+
 - Use Tailwind CSS utility classes
 - Follow the `@repo/ui` component patterns
 - Use CSS variables for theming (defined in Tailwind config)
@@ -78,11 +87,13 @@ This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
 ## Naming Conventions
 
 ### Files and Folders
+
 - Use kebab-case for file names: `user-profile.ts`
 - Use PascalCase for React components: `UserProfile.tsx`
 - Use lowercase for routes in Next.js: `app/user-profile/page.tsx`
 
 ### Code
+
 - **Variables/Functions**: camelCase (`getUserData`, `isActive`)
 - **Classes/Interfaces/Types**: PascalCase (`UserProfile`, `ApiResponse`)
 - **Constants**: SCREAMING_SNAKE_CASE (`API_BASE_URL`, `MAX_RETRIES`)
@@ -115,6 +126,7 @@ bun run typecheck        # Type-check all packages
 ## Import Conventions
 
 ### Workspace Packages
+
 ```typescript
 // Shared packages
 import { db } from "@repo/database";
@@ -124,6 +136,7 @@ import type { User } from "@repo/types";
 ```
 
 ### Relative Imports
+
 - Keep imports organized: external → workspace → relative
 - Group imports logically
 - Use path aliases from `tsconfig.json`
@@ -145,19 +158,21 @@ import type { User } from "@repo/types";
 ## Common Patterns
 
 ### API Route (Elysia)
+
 ```typescript
 import { Elysia } from "elysia";
 
 export const userRoutes = new Elysia({ prefix: "/users" })
-  .get("/", async () => {
-    // Handle GET /users
-  })
-  .post("/", async ({ body }) => {
-    // Handle POST /users
-  });
+	.get("/", async () => {
+		// Handle GET /users
+	})
+	.post("/", async ({ body }) => {
+		// Handle POST /users
+	});
 ```
 
 ### Next.js Server Component
+
 ```typescript
 export default async function UsersPage() {
   const users = await fetchUsers(); // Server-side fetch
@@ -166,6 +181,7 @@ export default async function UsersPage() {
 ```
 
 ### Next.js Client Component
+
 ```typescript
 "use client";
 
@@ -176,7 +192,7 @@ export function UserList() {
     queryKey: ["users"],
     queryFn: fetchUsers
   });
-  
+
   return <div>{/* Render users */}</div>;
 }
 ```
@@ -184,7 +200,8 @@ export function UserList() {
 ## Dependencies
 
 - Add dependencies to the appropriate package/app
-- Use workspace protocol for internal dependencies: `"@repo/database": "workspace:*"`
+- Use workspace protocol for internal dependencies:
+  `"@repo/database": "workspace:*"`
 - Run `bun install` at the root after adding dependencies
 - Consider if a dependency should be in a shared package
 

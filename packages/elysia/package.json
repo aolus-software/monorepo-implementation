@@ -7,7 +7,8 @@
 		"@types/bun": "latest"
 	},
 	"peerDependencies": {
-		"typescript": "^5"
+		"typescript": "^5",
+		"@repo/types": "workspace:*"
 	},
 	"dependencies": {
 		"@bogeychan/elysia-logger": "^0.1.10",
@@ -18,6 +19,7 @@
 		"elysia": "^1.4.22",
 		"elysia-helmet": "^3.0.0",
 		"elysia-rate-limit": "^4.4.2",
-		"pino": "^10.3.0"
+		"pino": "^10.3.0",
+		"pino-pretty": "^13.1.3"
 	}
 }

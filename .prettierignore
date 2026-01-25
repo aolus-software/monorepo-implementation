@@ -1,0 +1,20 @@
+# node / package manager
+node_modules
+.pnpm
+.bun
+.turbo
+
+# Next.js
+.next
+out
+
+# Builds
+dist
+build
+coverage
+
+# Logs
+*.log
+
+# OS
+.DS_Store

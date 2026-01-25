@@ -15,7 +15,26 @@ export const jwtEnvSchema = z.object({
 	JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
 });
 
-export const corsEnvSchema = z.object({});
+export const corsEnvSchema = z.object({
+	CORS_ORIGIN: z
+		.string()
+		.default("*")
+		.transform((val) =>
+			val === "*" ? "*" : val.split(",").map((origin) => origin.trim()),
+		),
+	CORS_METHODS: z
+		.string()
+		.default("GET,POST,PUT,DELETE,OPTIONS")
+		.transform((val) =>
+			val.split(",").map((method) => method.trim().toUpperCase()),
+		),
+	CORS_ALLOWED_HEADERS: z
+		.string()
+		.default("Content-Type,Authorization")
+		.transform((val) => val.split(",").map((header) => header.trim())),
+	CORS_CREDENTIALS: z.coerce.boolean().default(true),
+	CORS_MAX_AGE: z.coerce.number().default(86400),
+});
 
 export const mailerEnvSchema = z.object({
 	// MAILER_HOST: z.string(),
@@ -37,9 +56,11 @@ export const apiEnvSchema = z
 		PORT: z.coerce.number().default(3000),
 	})
 	.merge(appEnvSchema)
+	.merge(databaseEnvSchema)
 	.merge(corsEnvSchema)
 	.merge(jwtEnvSchema)
-	.merge(mailerEnvSchema);
+	.merge(mailerEnvSchema)
+	.merge(corsEnvSchema);
 
 export const webEnvSchema = z.object({
 	NEXT_PUBLIC_API_URL: z.string().url(),

@@ -1,12 +1,36 @@
-import { DatatableType, SortDirection } from "@app/apis/types/datatable";
-import { paginationLength } from "@default/pagination-length";
-import { defaultSort } from "@default/sort";
-import { PgColumn } from "drizzle-orm/pg-core";
+import {
+	DatatableType,
+	defaultSort,
+	paginationLength,
+	SortDirection,
+} from "@repo/types/src/index.ts";
+import { t } from "elysia";
 
 // Define the query type that includes filter parameters
 type QueryWithFilters = DatatableType & {
 	[key: string]: unknown;
 };
+
+export const DatatableQueryParams = t.Object({
+	page: t.Number({
+		default: 1,
+	}),
+	perPage: t.Number({
+		default: paginationLength,
+	}),
+	search: t.Optional(t.String()),
+	sort: t.Optional(
+		t.String({
+			default: "created_at",
+		}),
+	),
+	sortDirection: t.Union([t.Literal("asc"), t.Literal("desc")], {
+		default: "asc",
+	}),
+	filter: t.Optional(
+		t.Record(t.String(), t.Union([t.String(), t.Boolean(), t.String()])),
+	),
+});
 
 export class DatatableUtils {
 	static parseFilter(query: QueryWithFilters): DatatableType {
@@ -49,20 +73,20 @@ export class DatatableUtils {
 		};
 	}
 
-	static parseSort(
-		validateOrderBy: Record<string, PgColumn>,
-		orderBy: string,
-	): PgColumn {
-		type OrderableKey = keyof typeof validateOrderBy;
+	// static parseSort(
+	// 	validateOrderBy: Record<string, PgColumn>,
+	// 	orderBy: string,
+	// ): PgColumn {
+	// 	type OrderableKey = keyof typeof validateOrderBy;
 
-		const normalizedOrderBy: OrderableKey = Object.keys(
-			validateOrderBy,
-		).includes(orderBy)
-			? orderBy
-			: "id";
+	// 	const normalizedOrderBy: OrderableKey = Object.keys(
+	// 		validateOrderBy,
+	// 	).includes(orderBy)
+	// 		? orderBy
+	// 		: "id";
 
-		const orderColumn = validateOrderBy[normalizedOrderBy];
+	// 	const orderColumn = validateOrderBy[normalizedOrderBy];
 
-		return orderColumn;
-	}
+	// 	return orderColumn;
+	// }
 }

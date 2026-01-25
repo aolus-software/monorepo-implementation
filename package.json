@@ -10,16 +10,16 @@
 		"build:web": "turbo run build --filter='@repo/web-*'",
 		"build:api": "turbo run build --filter='@repo/api-*'",
 		"start": "turbo run start",
-		"db:generate": "turbo run db:generate",
-		"db:migrate": "turbo run db:migrate",
-		"db:studio": "turbo run db:studio",
-		"db:push": "turbo run db:push",
-		"db:pull": "turbo run db:pull",
 		"lint": "turbo run lint",
 		"lint:fix": "turbo run lint:fix",
-		"format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mjs}\" --ignore-path .gitignore",
-		"format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mjs}\" --ignore-path .gitignore",
-		"typecheck": "turbo run typecheck"
+		"format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mjs}\"",
+		"format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mjs}\"",
+		"typecheck": "turbo run typecheck",
+		"db:generate": "bunx --bun drizzle-kit generate",
+		"db:migrate": "bunx --bun drizzle-kit migrate",
+		"db:studio": "bunx --bun drizzle-kit studio",
+		"db:push": "bunx --bun drizzle-kit push",
+		"db:pull": "bunx --bun drizzle-kit pull"
 	},
 	"workspaces": [
 		"apps/*",
@@ -30,6 +30,8 @@
 		"@types/bun": "latest",
 		"@typescript-eslint/eslint-plugin": "^8.53.0",
 		"@typescript-eslint/parser": "^8.53.0",
+		"dotenv": "^17.2.3",
+		"drizzle-kit": "^0.31.8",
 		"eslint": "^9.39.2",
 		"prettier": "^3.8.0",
 		"turbo": "^2.7.5"
