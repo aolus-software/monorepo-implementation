@@ -9,7 +9,8 @@
 			"@repo/env": ["../../packages/env/src/index.ts"],
 			"@repo/database": ["../../packages/database/src/index.ts"],
 			"@repo/types": ["../../packages/types/src/index.ts"],
-			"@repo/elysia": ["../../packages/elysia/src/index.ts"]
+			"@repo/elysia": ["../../packages/elysia/src/index.ts"],
+			"@repo/utils": ["../../packages/utils/src/index.ts"]
 		}
 	},
 	"include": ["**/*.ts"],

@@ -1,6 +1,6 @@
 {
-	"name": "@repo/database",
-	"module": "index.ts",
+	"name": "@repo/utils",
+	"module": "src.ts",
 	"type": "module",
 	"private": true,
 	"scripts": {
@@ -10,18 +10,21 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"@repo/config": "workspace:*",
-		"@repo/env": "workspace:*",
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/crypto-js": "^4.2.2"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
 	},
+	"exports": {
+		".": {
+			"import": "./src/index.ts",
+			"types": "./src/index.ts"
+		}
+	},
 	"dependencies": {
-		"@repo/types": "workspace:*",
-		"@repo/elysia": "workspace:*",
-		"drizzle-orm": "^0.45.1",
-		"pg": "^8.17.2",
-		"postgres": "^3.4.8"
+		"bcryptjs": "^3.0.3",
+		"crypto-js": "^4.2.0",
+		"dayjs": "^1.11.19"
 	}
 }

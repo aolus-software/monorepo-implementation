@@ -7,7 +7,7 @@ import tseslint from "typescript-eslint";
 import importPlugin from "eslint-plugin-import";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 
-export default tseslint.config(
+export const baseConfig = tseslint.config(
 	{
 		ignores: [
 			"eslint.config.mjs",
