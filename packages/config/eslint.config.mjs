@@ -3,7 +3,6 @@ import eslint from "@eslint/js";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-
 import importPlugin from "eslint-plugin-import";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 
@@ -47,15 +46,16 @@ export const baseConfig = tseslint.config(
 			ecmaVersion: 2022,
 			sourceType: "module",
 			parserOptions: {
-				projectService: true,
+				projectService: {
+					allowDefaultProject: ["*.mjs", "*.js"],
+					defaultProject: "tsconfig.json",
+				},
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
 
 		rules: {
-			//
-			// ---- TypeScript Strict Rules ----
-			//
+			// TypeScript Strict Rules
 			"@typescript-eslint/no-explicit-any": "error",
 			"@typescript-eslint/no-floating-promises": "error",
 			"@typescript-eslint/no-unsafe-argument": "error",
@@ -115,9 +115,7 @@ export const baseConfig = tseslint.config(
 				},
 			],
 
-			//
-			// ---- Import Sorting & Organization ----
-			//
+			// Import Sorting & Organization
 			"simple-import-sort/imports": "error",
 			"simple-import-sort/exports": "error",
 			"import/first": "error",
@@ -125,9 +123,7 @@ export const baseConfig = tseslint.config(
 			"import/no-duplicates": "error",
 			"import/no-unresolved": "off", // TypeScript handles this
 
-			//
-			// ---- General JS Rules ----
-			//
+			// General JS Rules
 			"no-unused-expressions": "error",
 			"no-console": ["warn", { allow: ["warn", "error"] }],
 			"no-undef": "off", // TypeScript handles this
@@ -139,9 +135,7 @@ export const baseConfig = tseslint.config(
 			"no-var": "error",
 			eqeqeq: ["error", "always"],
 
-			//
-			// ---- Code Quality ----
-			//
+			// Code Quality
 			"no-throw-literal": "off",
 			"@typescript-eslint/only-throw-error": "error",
 			"@typescript-eslint/no-unnecessary-condition": "warn",

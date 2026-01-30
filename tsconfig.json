@@ -1,14 +1,16 @@
 {
 	"files": [],
 	"references": [
+		{ "path": "./packages/config" },
+		{ "path": "./packages/types" },
+		{ "path": "./packages/utils" },
+		{ "path": "./packages/env" },
+		{ "path": "./packages/elysia" },
+		{ "path": "./packages/database" },
+		{ "path": "./packages/ui" },
 		{ "path": "./apps/api-admin" },
 		{ "path": "./apps/api-user" },
 		{ "path": "./apps/web-admin" },
-		{ "path": "./apps/web-user" },
-		{ "path": "./packages/database" },
-		{ "path": "./packages/types" },
-		{ "path": "./packages/ui" },
-		{ "path": "./packages/config" },
-		{ "path": "./packages/env" }
+		{ "path": "./apps/web-user" }
 	]
 }

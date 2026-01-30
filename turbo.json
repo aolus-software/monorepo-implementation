@@ -2,31 +2,56 @@
 	"$schema": "https://turbo.build/schema.json",
 	"globalDependencies": [".env"],
 	"tasks": {
-		"dev": {
-			"cache": false,
-			"persistent": true,
-			"env": []
+		"clean": {
+			"cache": false
 		},
 		"build": {
 			"dependsOn": ["^build"],
 			"outputs": ["dist/**", ".next/**", "!.next/cache/**"]
 		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
 		"start": {
+			"dependsOn": ["build"],
 			"cache": false
 		},
 		"lint": {
-			"dependsOn": ["^lint"]
+			"dependsOn": ["^build"],
+			"outputs": []
 		},
 		"lint:fix": {
-			"cache": false
+			"dependsOn": ["^build"],
+			"cache": false,
+			"outputs": []
 		},
 		"typecheck": {
-			"dependsOn": ["^typecheck"]
+			"dependsOn": ["^build"],
+			"outputs": []
+		},
+		"format": {
+			"cache": false,
+			"outputs": []
+		},
+		"format:check": {
+			"outputs": []
 		},
 		"db:generate": {
-			"cache": false
+			"cache": false,
+			"outputs": ["packages/database/migrations/**"]
 		},
 		"db:migrate": {
+			"cache": false
+		},
+		"db:studio": {
+			"cache": false,
+			"persistent": true
+		},
+		"db:push": {
+			"cache": false
+		},
+		"db:pull": {
 			"cache": false
 		}
 	}

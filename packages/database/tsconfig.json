@@ -12,10 +12,22 @@
 		"outDir": "./dist",
 		"noEmit": false,
 		"paths": {
-			"@repo/types": ["../../packages/types"],
-			"@repo/elysia": ["../../packages/elysia"]
+			"@repo/types": ["../types/src/index.ts"],
+			"@repo/elysia": ["../elysia/src/index.ts"],
+			"@repo/utils": ["../utils/src/index.ts"]
 		}
 	},
-	"include": ["**/*.ts", "../../drizzle.config.ts"],
-	"exclude": ["node_modules", "dist"]
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules", "dist"],
+	"references": [
+		{
+			"path": "../types"
+		},
+		{
+			"path": "../elysia"
+		},
+		{
+			"path": "../utils"
+		}
+	]
 }

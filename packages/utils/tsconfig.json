@@ -1,11 +1,17 @@
 {
 	"extends": "@repo/config/tsconfig.base.json",
 	"compilerOptions": {
-		"module": "ESNext",
 		"target": "ESNext",
+		"lib": ["ESNext"],
+		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"types": ["bun-types"]
+		"baseUrl": ".",
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"outDir": "./dist",
+		"noEmit": false
 	},
-	"include": ["**/*.ts"],
+	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules", "dist"]
 }
