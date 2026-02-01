@@ -2,6 +2,10 @@
 export * from "./errors/index";
 export * from "./logger/logger";
 
+// guards -------------------
+export * from "./guards/permission.guard";
+export * from "./guards/role.guard";
+
 // event -------------------------
 
 // toolkit -------------------
