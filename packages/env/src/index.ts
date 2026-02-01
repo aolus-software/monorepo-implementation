@@ -37,12 +37,12 @@ export const corsEnvSchema = z.object({
 });
 
 export const mailerEnvSchema = z.object({
-	// MAILER_HOST: z.string(),
-	// MAILER_PORT: z.coerce.number(),
-	// MAILER_SECURE: z.coerce.boolean().default(false),
-	// MAILER_USER: z.string(),
-	// MAILER_PASSWORD: z.string(),
-	// MAILER_FROM: z.string().email(),
+	MAILER_HOST: z.string(),
+	MAILER_PORT: z.coerce.number(),
+	MAILER_SECURE: z.coerce.boolean().default(false),
+	MAILER_USER: z.string(),
+	MAILER_PASSWORD: z.string(),
+	MAILER_FROM: z.string().email(),
 });
 
 export const appEnvSchema = z.object({
@@ -69,5 +69,6 @@ export const webEnvSchema = z.object({
 export type DatabaseEnv = z.infer<typeof databaseEnvSchema>;
 export type RedisEnv = z.infer<typeof redisEnvSchema>;
 export type JwtEnv = z.infer<typeof jwtEnvSchema>;
+export type MailerEnv = z.infer<typeof mailerEnvSchema>;
 export type ApiEnv = z.infer<typeof apiEnvSchema>;
 export type WebEnv = z.infer<typeof webEnvSchema>;

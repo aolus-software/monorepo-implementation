@@ -1,10 +1,3 @@
-// import { UserInformation } from "@apis/types/UserInformation";
-// import { DatatableType, SortDirection } from "@app/apis/types/datatable";
-// import { PaginationResponse } from "@app/apis/types/pagination";
-// import { defaultSort } from "@default/sort";
-// import { BadRequestError, NotFoundError, UnauthorizedError } from "@packages";
-// import { users, UserStatusEnum } from "@postgres/schema/user";
-// import { Hash } from "@security/hash";
 import {
 	and,
 	asc,
@@ -16,20 +9,39 @@ import {
 	or,
 	SQL,
 } from "drizzle-orm";
-import { DbTransaction } from ".";
-import { DatatableType } from "@repo/";
+import { DbClient, DbTransaction } from ".";
 import { userRoles, users, UserStatusEnum } from "src/schema";
+import { HashUtils } from "../../../utils/src/security/hash";
+import {
+	DatatableType,
+	defaultSort,
+	PaginationResponse,
+	SortDirection,
+	UserCreate,
+	UserDetail,
+	UserForAuth,
+	UserInformation,
+	UserList,
+} from "@repo/types";
 
-// import { db, userRoles } from "..";
-// import { DbTransaction } from ".";
+import {
+	BadRequestError,
+	NotFoundError,
+	UnauthorizedError,
+} from "@repo/elysia";
 
-export const UserRepository = (dbInstance: DbTransaction) => {
+export const UserRepository = (dbInstance: DbClient) => {
 	return {
 		db: dbInstance,
-		getDb: (tx?: DbTransaction) => tx || dbInstance.$cache,
+		getDb: (tx?: DbTransaction) => tx || (dbInstance as any).$cache,
 
 		findAll: async (
-			queryParam: DatatableType,
+			queryParam: DatatableType<{
+				status: boolean | string;
+				name: string;
+				email: string;
+				role_id: string;
+			}>,
 			tx?: DbTransaction,
 		): Promise<PaginationResponse<UserList>> => {
 			const database = tx || dbInstance;
@@ -41,8 +53,7 @@ export const UserRepository = (dbInstance: DbTransaction) => {
 			const orderDirection: SortDirection = queryParam.sortDirection
 				? queryParam.sortDirection
 				: "desc";
-			const filter: Record<string, boolean | string | Date> | null =
-				queryParam.filter || null;
+			const filter = queryParam.filter || null;
 			const offset = (page - 1) * limit;
 
 			let whereCondition: SQL | undefined = isNull(users.deleted_at);
@@ -200,8 +211,8 @@ export const UserRepository = (dbInstance: DbTransaction) => {
 				]);
 			}
 
-			const hashedPassword = await Hash.generateHash(data.password);
-			const user = await database
+			const hashedPassword = await HashUtils.generateHash(data.password);
+			const [user] = await database
 				.insert(users)
 				.values({
 					name: data.name,
@@ -212,22 +223,7 @@ export const UserRepository = (dbInstance: DbTransaction) => {
 				})
 				.returning();
 
-			if (data.role_ids && data.role_ids.length > 0) {
-				if (user.length > 0) {
-					const userId = user[0].id;
-					const userRolesData: {
-						user_id: string;
-						role_id: string;
-					}[] = data.role_ids.map((role_id) => ({
-						user_id: userId,
-						role_id: role_id,
-					}));
-
-					await database.insert(userRoles).values(userRolesData);
-				}
-			}
-
-			if (user.length === 0) {
+			if (!user) {
 				throw new BadRequestError("Failed to create user", [
 					{
 						field: "user",
@@ -236,8 +232,21 @@ export const UserRepository = (dbInstance: DbTransaction) => {
 				]);
 			}
 
+			let userId = user.id;
+			if (data.role_ids && data.role_ids.length > 0) {
+				const userRolesData: {
+					user_id: string;
+					role_id: string;
+				}[] = data.role_ids.map((role_id) => ({
+					user_id: userId,
+					role_id: role_id,
+				}));
+
+				await database.insert(userRoles).values(userRolesData);
+			}
+
 			const userDetail = await database.query.users.findFirst({
-				where: and(eq(users.id, user[0].id), isNull(users.deleted_at)),
+				where: and(eq(users.id, userId), isNull(users.deleted_at)),
 				columns: {
 					id: true,
 					name: true,
