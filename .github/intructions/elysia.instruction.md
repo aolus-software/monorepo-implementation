@@ -2,9 +2,7 @@
 
 ## Elysia.js Fundamentals
 
-Elysia is a modern, ergonomic TypeScript framework for Bun with focus on
-performance and developer experience. It uses method chaining and functional
-composition for building APIs.
+Elysia is a modern, ergonomic TypeScript framework for Bun with focus on performance and developer experience. It uses method chaining and functional composition for building APIs.
 
 ## Project Structure (Backend Apps)
 
@@ -12,300 +10,314 @@ composition for building APIs.
 apps/api-{admin|user}/
 ├── src/
 │   ├── index.ts              # App entry point
-│   ├── routes/               # Route definitions
-│   │   ├── users.ts
-│   │   └── auth.ts
-│   ├── services/             # Business logic
-│   │   ├── user-service.ts
-│   │   └── auth-service.ts
-│   ├── middleware/           # Custom middleware
-│   │   ├── auth.ts
-│   │   └── logger.ts
-│   └── utils/                # Utility functions
-├── package.json
-└── tsconfig.json
+│   ├── base.ts               # Base Elysia instance with plugins
+│   ├── base-auth.ts          # Auth-protected base instance
+│   ├── env.ts                # Environment validation
+│   ├── db.ts                 # Database connection
+│   ├── mailer.ts             # Mailer instance (if applicable)
+│   ├── modules/              # Feature modules
+│   │   ├── auth/             # Authentication module
+│   │   │   └── index.ts      # Auth routes
+│   │   ├── home/             # Home module
+│   │   │   └── index.ts      # Home routes
+│   │   └── settings/         # Settings module
+│   │       └── index.ts      # Settings routes
+│   └── services/             # Business logic
+│       └── email.service.ts
+└── storage/logs/             # Application logs
 ```
+
+## Base Instances
+
+### 1. Base App (base.ts)
+
+Use `baseApp` for public routes that don't require authentication:
+
+```typescript
+import {
+	ErrorHandlerPlugin,
+	LoggerPlugin,
+	RequestPlugin,
+	SecurityPlugin,
+} from "@repo/elysia";
+import { Elysia } from "elysia";
+import { env } from "./env";
+
+export const baseApp = new Elysia({ name: "base-app" })
+	.use(RequestPlugin)
+	.use(
+		SecurityPlugin({
+			corsOptions: {
+				origin: env.CORS_ORIGIN,
+				methods: env.CORS_METHODS,
+				allowedHeaders: env.CORS_ALLOWED_HEADERS,
+				credentials: env.CORS_CREDENTIALS,
+				maxAge: env.CORS_MAX_AGE,
+			},
+			rateLimitOptions: undefined,
+			helmetOptions: undefined,
+		}),
+	)
+	.use(LoggerPlugin)
+	.use(ErrorHandlerPlugin);
+```
+
+**Features:**
+- Request logging
+- CORS configuration
+- Rate limiting (optional)
+- Security headers (optional)
+- Global error handling
+
+### 2. Base Auth App (base-auth.ts)
+
+Use `baseAuthApp` for protected routes that require authentication:
+
+```typescript
+import { AuthPlugin } from "@repo/elysia";
+import { Elysia } from "elysia";
+import { baseApp } from "./base";
+import { db } from "./db";
+import { env } from "./env";
+
+export const baseAuthApp = new Elysia({ name: "base-auth-app" })
+	.use(baseApp)
+	.use(
+		AuthPlugin({
+			jwt: {
+				secret: env.JWT_SECRET,
+				exp: env.JWT_EXPIRES_IN,
+				alg: "HS256",
+			},
+			db: db,
+			requireAuth: true,
+			messages: {
+				noToken: "Authentication required",
+				invalidToken: "Invalid or expired authentication token",
+				userNotFound: "User not found or inactive",
+			},
+		}),
+	);
+```
+
+**Features:**
+- All base app features
+- JWT authentication
+- Automatic user retrieval
+- Role and permission checking
+- User context injection
 
 ## Core Patterns
 
-### 1. Route Definition with Elysia
+### 1. Creating Public Routes
+
+Use `baseApp` for public endpoints:
 
 ```typescript
+// modules/home/index.ts
 import { Elysia } from "elysia";
+import { baseApp } from "../../base";
 
-// Simple routes
-export const userRoutes = new Elysia({ prefix: "/users" })
-	.get("/", async () => {
-		const users = await getAllUsers();
-		return users;
+export const HomeModule = new Elysia({ prefix: "/home" })
+	.use(baseApp)
+	.get("/", () => {
+		return { message: "Welcome to the API" };
 	})
-	.get("/:id", async ({ params }) => {
-		const user = await getUserById(params.id);
-		if (!user) throw new Error("User not found");
-		return user;
-	})
-	.post("/", async ({ body }) => {
-		const user = await createUser(body);
-		return user;
-	})
-	.put("/:id", async ({ params, body }) => {
-		const user = await updateUser(params.id, body);
-		return user;
-	})
-	.delete("/:id", async ({ params, set }) => {
-		await deleteUser(params.id);
-		set.status = 204;
+	.get("/health", () => {
+		return { status: "ok", timestamp: new Date() };
 	});
 ```
 
-### 2. Request Validation with Zod
+### 2. Creating Protected Routes
+
+Use `baseAuthApp` for authenticated endpoints:
+
+```typescript
+// modules/users/index.ts
+import { Elysia, t } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.use(baseAuthApp)
+	.get("/", ({ user }) => {
+		// user is automatically available and typed
+		return { message: `Hello ${user.name}`, userId: user.id };
+	})
+	.get("/profile", ({ user }) => {
+		return {
+			id: user.id,
+			name: user.name,
+			email: user.email,
+		};
+	});
+```
+
+### 3. Role-Based Access Control (RBAC)
+
+Use the `rbac` macro for specific permissions:
+
+```typescript
+import { Elysia } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+
+export const AdminModule = new Elysia({ prefix: "/admin" })
+	.use(baseAuthApp)
+	// Require admin role
+	.get("/dashboard", ({ user }) => {
+		return { message: "Admin dashboard" };
+	}, {
+		rbac: { roles: ["admin"] }
+	})
+	// Require specific permission
+	.get("/sensitive", ({ user }) => {
+		return { data: "sensitive information" };
+	}, {
+		rbac: { permissions: ["users.read.sensitive"] }
+	})
+	// Require either role or permission
+	.delete("/:id", ({ params, user }) => {
+		return { message: `Deleted user ${params.id}` };
+	}, {
+		rbac: { 
+			roles: ["admin", "moderator"],
+			permissions: ["users.delete"] 
+		}
+	});
+```
+
+### 4. Request Validation with TypeBox
+
+Use TypeBox (via Elysia's `t`) for request validation:
 
 ```typescript
 import { Elysia, t } from "elysia";
-import { z } from "zod";
+import { baseAuthApp } from "../../base-auth";
 
-const createUserSchema = z.object({
-	name: z.string().min(2),
-	email: z.string().email(),
-	age: z.number().min(18).optional(),
-});
-
-export const userRoutes = new Elysia({ prefix: "/users" }).post(
-	"/",
-	async ({ body }) => {
-		// Validate with Zod
-		const validated = createUserSchema.parse(body);
-		return await createUser(validated);
-	},
-	{
-		body: t.Object({
-			name: t.String({ minLength: 2 }),
-			email: t.String({ format: "email" }),
-			age: t.Optional(t.Number({ minimum: 18 })),
-		}),
-	},
-);
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.use(baseAuthApp)
+	.post(
+		"/",
+		async ({ body }) => {
+			// body is automatically validated and typed
+			const user = await createUser(body);
+			return user;
+		},
+		{
+			body: t.Object({
+				name: t.String({ minLength: 2, maxLength: 100 }),
+				email: t.String({ format: "email" }),
+				age: t.Optional(t.Number({ minimum: 18, maximum: 120 })),
+			}),
+		},
+	)
+	.put(
+		"/:id",
+		async ({ params, body }) => {
+			const user = await updateUser(params.id, body);
+			return user;
+		},
+		{
+			params: t.Object({
+				id: t.String({ format: "uuid" }),
+			}),
+			body: t.Object({
+				name: t.Optional(t.String({ minLength: 2 })),
+				email: t.Optional(t.String({ format: "email" })),
+			}),
+		},
+	);
 ```
 
-### 3. Error Handling
+**Common TypeBox patterns:**
 
 ```typescript
-import { Elysia } from "elysia";
+// String validation
+t.String()
+t.String({ minLength: 2, maxLength: 100 })
+t.String({ format: "email" })
+t.String({ format: "uuid" })
+t.String({ pattern: "^[a-zA-Z]+$" })
 
-export class UserNotFoundError extends Error {
-	constructor(id: string) {
-		super(`User with id ${id} not found`);
-		this.name = "UserNotFoundError";
-	}
-}
+// Number validation
+t.Number()
+t.Number({ minimum: 0, maximum: 100 })
+t.Integer()
 
-export const userRoutes = new Elysia({ prefix: "/users" })
-	.onError(({ code, error, set }) => {
-		if (error instanceof UserNotFoundError) {
-			set.status = 404;
-			return { error: error.message };
-		}
+// Boolean
+t.Boolean()
 
-		if (code === "VALIDATION") {
-			set.status = 400;
-			return { error: "Validation failed", details: error };
-		}
+// Optional fields
+t.Optional(t.String())
 
-		set.status = 500;
-		return { error: "Internal server error" };
-	})
-	.get("/:id", async ({ params }) => {
-		const user = await getUserById(params.id);
-		if (!user) throw new UserNotFoundError(params.id);
-		return user;
-	});
-```
+// Arrays
+t.Array(t.String())
+t.Array(t.Object({ id: t.String(), name: t.String() }))
 
-### 4. Middleware
+// Enums
+t.Union([t.Literal("active"), t.Literal("inactive")])
 
-```typescript
-import { Elysia } from "elysia";
-
-// Logger middleware
-export const logger = new Elysia()
-	.onRequest(({ request, path }) => {
-		console.log(`${request.method} ${path}`);
-	})
-	.onResponse(({ request, path }) => {
-		console.log(`${request.method} ${path} - completed`);
-	});
-
-// Auth middleware
-export const authMiddleware = new Elysia()
-	.derive(({ headers }) => {
-		const token = headers.authorization?.replace("Bearer ", "");
-		return { token };
-	})
-	.resolve(async ({ token, set }) => {
-		if (!token) {
-			set.status = 401;
-			throw new Error("Unauthorized");
-		}
-
-		const user = await verifyToken(token);
-		return { user };
-	});
-
-// Usage
-const app = new Elysia()
-	.use(logger)
-	.use(authMiddleware)
-	.get("/protected", ({ user }) => {
-		return { message: `Hello ${user.name}` };
-	});
+// Nested objects
+t.Object({
+	user: t.Object({
+		name: t.String(),
+		email: t.String({ format: "email" }),
+	}),
+	settings: t.Optional(t.Object({
+		theme: t.String(),
+	})),
+})
 ```
 
 ### 5. Database Integration (Drizzle ORM)
 
 ```typescript
-import { Elysia } from "elysia";
-import { db } from "@repo/database";
+import { Elysia, t } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+import { db } from "../../db";
 import { users } from "@repo/database/schema";
 import { eq } from "drizzle-orm";
+import { NotFoundError } from "@repo/elysia";
 
-export const userRoutes = new Elysia({ prefix: "/users" })
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.use(baseAuthApp)
 	.get("/", async () => {
 		return await db.select().from(users);
 	})
 	.get("/:id", async ({ params }) => {
-		const [user] = await db.select().from(users).where(eq(users.id, params.id));
-
-		if (!user) throw new Error("User not found");
-		return user;
-	})
-	.post("/", async ({ body }) => {
-		const [user] = await db.insert(users).values(body).returning();
-
-		return user;
-	})
-	.put("/:id", async ({ params, body }) => {
 		const [user] = await db
-			.update(users)
-			.set(body)
-			.where(eq(users.id, params.id))
-			.returning();
+			.select()
+			.from(users)
+			.where(eq(users.id, params.id));
+
+		// Throw error for automatic handling
+		if (!user) {
+			throw new NotFoundError("User not found");
+		}
 
 		return user;
 	})
-	.delete("/:id", async ({ params, set }) => {
-		await db.delete(users).where(eq(users.id, params.id));
-		set.status = 204;
-	});
-```
-
-### 6. CORS Configuration
-
-```typescript
-import { Elysia } from "elysia";
-import { cors } from "@elysiajs/cors";
-
-const app = new Elysia()
-	.use(
-		cors({
-			origin: process.env.ALLOWED_ORIGINS?.split(",") || [
-				"http://localhost:3000",
-			],
-			credentials: true,
-		}),
-	)
-	.get("/", () => "API is running");
-```
-
-### 7. API Documentation with Swagger
-
-```typescript
-import { Elysia } from "elysia";
-import { swagger } from "@elysiajs/swagger";
-
-const app = new Elysia()
-	.use(
-		swagger({
-			documentation: {
-				info: {
-					title: "Admin API Documentation",
-					version: "1.0.0",
-				},
-			},
-		}),
-	)
-	.get(
-		"/users",
-		() => {
-			return { users: [] };
+	.post(
+		"/",
+		async ({ body }) => {
+			const [user] = await db.insert(users).values(body).returning();
+			return user;
 		},
 		{
-			detail: {
-				summary: "Get all users",
-				tags: ["Users"],
-			},
+			body: t.Object({
+				name: t.String(),
+				email: t.String({ format: "email" }),
+			}),
 		},
 	);
 ```
 
-### 8. App Composition
+### 6. Service Layer Pattern
+
+Keep routes thin, move logic to services:
 
 ```typescript
-import { Elysia } from "elysia";
-import { cors } from "@elysiajs/cors";
-import { swagger } from "@elysiajs/swagger";
-import { apiEnvSchema } from "@repo/env";
-
-import { userRoutes } from "./routes/users";
-import { authRoutes } from "./routes/auth";
-import { logger } from "./middleware/logger";
-
-const env = apiEnvSchema.parse(process.env);
-
-const app = new Elysia()
-	.use(cors())
-	.use(
-		swagger({
-			documentation: {
-				info: {
-					title: "API Documentation",
-					version: "1.0.0",
-				},
-			},
-		}),
-	)
-	.use(logger)
-	.get("/health", () => ({ status: "ok" }))
-	.use(authRoutes)
-	.use(userRoutes)
-	.listen(env.PORT);
-
-console.log(`🦊 Server running at http://localhost:${env.PORT}`);
-```
-
-## Best Practices
-
-### 1. Environment Variables
-
-```typescript
-import { z } from "zod";
-
-// Define in @repo/env
-export const apiEnvSchema = z.object({
-	PORT: z.coerce.number().default(3000),
-	DATABASE_URL: z.string(),
-	JWT_SECRET: z.string(),
-});
-
-// Use in app
-import { apiEnvSchema } from "@repo/env";
-const env = apiEnvSchema.parse(process.env);
-```
-
-### 2. Service Layer Pattern
-
-```typescript
-// services/user-service.ts
-import { db } from "@repo/database";
+// services/user.service.ts
+import { db } from "../db";
 import { users } from "@repo/database/schema";
 import { eq } from "drizzle-orm";
 import type { NewUser, User } from "@repo/types";
@@ -341,88 +353,171 @@ export class UserService {
 
 export const userService = new UserService();
 
-// routes/users.ts
-import { Elysia } from "elysia";
-import { userService } from "../services/user-service";
+// modules/users/index.ts
+import { Elysia, t } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+import { userService } from "../../services/user.service";
+import { NotFoundError } from "@repo/elysia";
 
-export const userRoutes = new Elysia({ prefix: "/users" })
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.use(baseAuthApp)
 	.get("/", () => userService.getAll())
 	.get("/:id", async ({ params }) => {
 		const user = await userService.getById(params.id);
-		if (!user) throw new Error("User not found");
+		if (!user) throw new NotFoundError("User not found");
 		return user;
+	})
+	.post(
+		"/",
+		async ({ body }) => {
+			return await userService.create(body);
+		},
+		{
+			body: t.Object({
+				name: t.String(),
+				email: t.String({ format: "email" }),
+			}),
+		},
+	);
+```
+
+### 7. Environment Variables
+
+Environment variables are already validated via `@repo/env`:
+
+```typescript
+// env.ts
+import { apiEnvSchema } from "@repo/env";
+
+export const env = apiEnvSchema.parse(process.env);
+
+// Usage in any file
+import { env } from "./env";
+
+console.log(env.PORT);
+console.log(env.DATABASE_URL);
+console.log(env.JWT_SECRET);
+```
+
+Never access `process.env` directly. Always use the validated `env` object.
+
+### 8. Error Handling
+
+Errors are automatically handled by the `ErrorHandlerPlugin`. Use the provided error classes from `@repo/elysia`:
+
+```typescript
+import { Elysia } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+import { 
+	NotFoundError, 
+	UnauthorizedError,
+	BadRequestError,
+	ForbiddenError,
+	UnprocessableEntityError 
+} from "@repo/elysia";
+
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.use(baseAuthApp)
+	.get("/:id", async ({ params }) => {
+		const user = await getUserById(params.id);
+		
+		// Throw error for automatic handling
+		if (!user) {
+			throw new NotFoundError("User not found");
+		}
+		
+		return user;
+	})
+	.post("/", async ({ body }) => {
+		// Validate business logic
+		const existingUser = await findUserByEmail(body.email);
+		if (existingUser) {
+			throw new BadRequestError("Email already exists", [
+				{ field: "email", message: "This email is already registered" }
+			]);
+		}
+		
+		return await createUser(body);
+	})
+	.delete("/:id", async ({ params, user }) => {
+		// Manual permission check
+		if (user.id !== params.id && !user.roles.includes("admin")) {
+			throw new ForbiddenError("You can only delete your own account");
+		}
+		
+		const result = await deleteUser(params.id);
+		if (!result) {
+			throw new NotFoundError("User not found");
+		}
+		
+		return { success: true };
 	});
 ```
 
-### 3. Type Safety
+**Available Error Classes:**
 
 ```typescript
-// Use shared types from @repo/types
-import type { User, NewUser } from "@repo/types";
+// 400 Bad Request
+throw new BadRequestError("Invalid data", [
+	{ field: "email", message: "Invalid email format" },
+	{ field: "age", message: "Must be 18 or older" }
+]);
 
-// Define route-specific types locally
-type UserResponse = Omit<User, "password">;
+// 401 Unauthorized
+throw new UnauthorizedError("Invalid credentials");
 
-export const userRoutes = new Elysia({ prefix: "/users" }).get(
-	"/",
-	async (): Promise<UserResponse[]> => {
-		const users = await getAllUsers();
-		return users.map(({ password, ...user }) => user);
-	},
-);
+// 403 Forbidden
+throw new ForbiddenError("Insufficient permissions");
+
+// 404 Not Found
+throw new NotFoundError("Resource not found");
+
+// 422 Unprocessable Entity
+throw new UnprocessableEntityError("Validation failed", [
+	{ field: "name", message: "Name is required" }
+]);
 ```
 
-### 4. Error Classes
+**Error responses are automatically formatted:**
 
-```typescript
-// utils/errors.ts
-export class ApiError extends Error {
-  constructor(
-    public statusCode: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
+```json
+{
+  "status": 404,
+  "success": false,
+  "message": "User not found",
+  "data": null
 }
-
-export class NotFoundError extends ApiError {
-  constructor(resource: string, id: string) {
-    super(404, `${resource} with id ${id} not found`);
-    this.name = "NotFoundError";
-  }
-}
-
-export class ValidationError extends ApiError {
-  constructor(message: string) {
-    super(400, message);
-    this.name = "ValidationError";
-  }
-}
-
-// Usage in routes
-.onError(({ error, set }) => {
-  if (error instanceof ApiError) {
-    set.status = error.statusCode;
-    return { error: error.message };
-  }
-
-  set.status = 500;
-  return { error: "Internal server error" };
-})
 ```
 
-### 5. Database Transactions
+**For validation errors:**
+
+```json
+{
+  "status": 422,
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    { "field": "email", "message": "Invalid email format" },
+    { "field": "age", "message": "Must be 18 or older" }
+  ]
+}
+```
+
+### 9. Database Transactions
 
 ```typescript
-import { db } from "@repo/database";
+import { db } from "../../db";
+import { users, profiles } from "@repo/database/schema";
 
 export const createUserWithProfile = async (
 	userData: NewUser,
 	profileData: NewProfile,
 ) => {
 	return await db.transaction(async (tx) => {
+		// Insert user
 		const [user] = await tx.insert(users).values(userData).returning();
+		
+		// Insert profile
 		const [profile] = await tx
 			.insert(profiles)
 			.values({
@@ -436,53 +531,440 @@ export const createUserWithProfile = async (
 };
 ```
 
-## Testing
+### 10. App Composition
 
 ```typescript
-import { describe, it, expect } from "bun:test";
+// index.ts
 import { Elysia } from "elysia";
-import { userRoutes } from "./routes/users";
+import { swagger } from "@elysiajs/swagger";
+import { env } from "./env";
 
-describe("User Routes", () => {
-	it("should get all users", async () => {
-		const app = new Elysia().use(userRoutes);
-		const response = await app.handle(new Request("http://localhost/users"));
+// Import modules
+import { HomeModule } from "./modules/home";
+import { AuthModule } from "./modules/auth";
+import { UsersModule } from "./modules/users";
+import { SettingsModule } from "./modules/settings";
 
-		expect(response.status).toBe(200);
-		const users = await response.json();
-		expect(Array.isArray(users)).toBe(true);
-	});
+const app = new Elysia()
+	.use(
+		swagger({
+			documentation: {
+				info: {
+					title: "API Documentation",
+					version: "1.0.0",
+					description: "Admin API",
+				},
+				tags: [
+					{ name: "Auth", description: "Authentication endpoints" },
+					{ name: "Users", description: "User management" },
+					{ name: "Settings", description: "Settings management" },
+				],
+			},
+		}),
+	)
+	.use(HomeModule)
+	.use(AuthModule)
+	.use(UsersModule)
+	.use(SettingsModule)
+	.listen(env.PORT);
+
+console.log(`Server running at http://localhost:${env.PORT}`);
+```
+
+## Module Structure
+
+Each module should follow this structure:
+
+```typescript
+// modules/users/index.ts
+import { Elysia, t } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+import { userService } from "../../services/user.service";
+
+export const UsersModule = new Elysia({ prefix: "/users", tags: ["Users"] })
+	.use(baseAuthApp)
+	.get(
+		"/",
+		() => userService.getAll(),
+		{
+			detail: {
+				summary: "Get all users",
+				description: "Retrieve a list of all users",
+			},
+		},
+	)
+	.get(
+		"/:id",
+		async ({ params }) => {
+			const user = await userService.getById(params.id);
+			if (!user) throw new NotFoundError("User not found");
+			return user;
+		},
+		{
+			params: t.Object({
+				id: t.String({ format: "uuid" }),
+			}),
+			detail: {
+				summary: "Get user by ID",
+				description: "Retrieve a specific user by their ID",
+			},
+		},
+	)
+	.post(
+		"/",
+		async ({ body }) => {
+			return await userService.create(body);
+		},
+		{
+			body: t.Object({
+				name: t.String({ minLength: 2 }),
+				email: t.String({ format: "email" }),
+			}),
+			detail: {
+				summary: "Create user",
+				description: "Create a new user",
+			},
+		},
+	)
+	.put(
+		"/:id",
+		async ({ params, body }) => {
+			const user = await userService.update(params.id, body);
+			if (!user) throw new NotFoundError("User not found");
+			return user;
+		},
+		{
+			params: t.Object({
+				id: t.String({ format: "uuid" }),
+			}),
+			body: t.Object({
+				name: t.Optional(t.String({ minLength: 2 })),
+				email: t.Optional(t.String({ format: "email" })),
+			}),
+			detail: {
+				summary: "Update user",
+				description: "Update an existing user",
+			},
+		},
+	)
+	.delete(
+		"/:id",
+		async ({ params }) => {
+			await userService.delete(params.id);
+			return { success: true };
+		},
+		{
+			params: t.Object({
+				id: t.String({ format: "uuid" }),
+			}),
+			detail: {
+				summary: "Delete user",
+				description: "Delete a user by ID",
+			},
+			rbac: { 
+				roles: ["admin"],
+				permissions: ["users.delete"] 
+			},
+		},
+	);
+```
+
+## Best Practices
+
+### 1. Always Use Base Instances
+
+Never create raw Elysia instances. Always extend from `baseApp` or `baseAuthApp`:
+
+```typescript
+// Good
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.use(baseAuthApp)
+	.get("/", handler);
+
+// Bad - missing plugins and error handling
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.get("/", handler);
+```
+
+### 2. Module Organization
+
+- One module per feature
+- Each module in its own directory
+- Export from `index.ts`
+- Keep routes thin, logic in services
+
+```
+modules/
+├── auth/
+│   ├── index.ts          # Auth routes
+│   └── auth.service.ts   # Auth logic
+├── users/
+│   ├── index.ts          # User routes
+│   └── users.service.ts  # User logic
+└── settings/
+    ├── index.ts          # Settings routes
+    └── settings.service.ts
+```
+
+### 3. Type Safety
+
+Use shared types from `@repo/types`:
+
+```typescript
+import type { User, NewUser, UpdateUser } from "@repo/types";
+
+// Type service methods
+export class UserService {
+	async getAll(): Promise<User[]> {
+		// ...
+	}
+
+	async create(data: NewUser): Promise<User> {
+		// ...
+	}
+}
+```
+
+### 4. Validation
+
+Always validate request data with TypeBox:
+
+```typescript
+// Define validation schema
+const createUserSchema = t.Object({
+	name: t.String({ minLength: 2, maxLength: 100 }),
+	email: t.String({ format: "email" }),
+	age: t.Optional(t.Number({ minimum: 18 })),
 });
+
+// Apply to route
+.post("/", handler, {
+	body: createUserSchema
+})
+```
+
+### 5. Documentation
+
+Add Swagger documentation to routes:
+
+```typescript
+.get("/", handler, {
+	detail: {
+		summary: "Get all users",
+		description: "Retrieve a list of all users in the system",
+		tags: ["Users"],
+	}
+})
+```
+
+### 6. RBAC Usage
+
+Apply RBAC where needed:
+
+```typescript
+// Role-based
+.delete("/:id", handler, {
+	rbac: { roles: ["admin"] }
+})
+
+// Permission-based
+.get("/sensitive", handler, {
+	rbac: { permissions: ["users.read.sensitive"] }
+})
+
+// Combined (either role OR permission)
+.post("/", handler, {
+	rbac: { 
+		roles: ["admin", "moderator"],
+		permissions: ["users.create"] 
+	}
+})
 ```
 
 ## Common Pitfalls
 
-1. **Don't forget to parse environment variables** with Zod schema
-2. **Always validate input** before processing
-3. **Use transactions** for multi-step database operations
-4. **Handle errors properly** - return appropriate status codes
-5. **Don't expose sensitive data** in error messages
-6. **Keep routes thin** - move logic to services
-7. **Use TypeScript types** from `@repo/types`
-8. **Test your endpoints** manually and with automated tests
+1. **Don't create raw Elysia instances** - Always use `baseApp` or `baseAuthApp`
+2. **Don't access process.env directly** - Use the validated `env` object
+3. **Don't handle errors manually** - Use error classes from `@repo/elysia`
+4. **Don't use Zod** - This project uses TypeBox via Elysia's `t`
+5. **Don't skip validation** - Always validate request data with TypeBox
+6. **Don't put logic in routes** - Move business logic to services
+7. **Keep routes thin** - Handler should be one-liners calling services
+8. **Use TypeScript types** from `@repo/types` for consistency
+9. **Import error classes** from `@repo/elysia`, not custom ones
+10. **Use proper error classes** - BadRequestError, NotFoundError, UnauthorizedError, ForbiddenError, UnprocessableEntityError
+
+## Available Plugins and Utilities
+
+### Plugins (from `@repo/elysia`)
+
+```typescript
+import {
+	// Plugins
+	AuthPlugin,
+	ErrorHandlerPlugin,
+	LoggerPlugin,
+	RequestPlugin,
+	SecurityPlugin,
+	
+	// Error Classes
+	BadRequestError,
+	ForbiddenError,
+	NotFoundError,
+	RateLimitError,
+	UnauthorizedError,
+	UnprocessableEntityError,
+	
+	// Guards
+	requireRoles,
+	requirePermissions,
+} from "@repo/elysia";
+```
+
+**Plugin Descriptions:**
+
+1. **RequestPlugin** - Adds `requestId` and `startedAt` to context
+2. **SecurityPlugin** - Configures CORS, rate limiting, and security headers
+3. **LoggerPlugin** - Automatic request/response logging with Pino
+4. **ErrorHandlerPlugin** - Global error handling for all error types
+5. **AuthPlugin** - JWT authentication with RBAC support
+
+### Manual Permission Checks
+
+If you need to check permissions manually inside a handler:
+
+```typescript
+import { requireRoles, requirePermissions } from "@repo/elysia";
+
+export const UsersModule = new Elysia({ prefix: "/users" })
+	.use(baseAuthApp)
+	.post("/special-action", async ({ user, body }) => {
+		// Manual role check
+		requireRoles(user, ["admin", "moderator"]);
+		
+		// Manual permission check
+		requirePermissions(user, ["users.special.action"]);
+		
+		// Proceed with action
+		return await performSpecialAction(body);
+	});
+```
+
+### Request Context
+
+Every request has access to these properties:
+
+```typescript
+.get("/example", ({ 
+	user,           // User information (if authenticated)
+	requestId,      // Unique request ID
+	startedAt,      // Request start timestamp
+	log,            // Pino logger instance
+	request,        // Raw Request object
+	params,         // URL parameters
+	query,          // Query string parameters
+	body,           // Request body (validated if schema provided)
+	headers,        // Request headers
+}) => {
+	log.info({ requestId }, "Processing request");
+	return { success: true };
+});
+```
 
 ## Performance Tips
 
 - Use `.select()` to fetch only needed columns
 - Add database indexes for frequently queried fields
-- Use connection pooling for database connections
-- Implement caching for frequently accessed data
-- Use streaming for large responses
-- Avoid N+1 queries with proper joins
+- Use transactions for multi-step operations
+- Implement caching in services when needed
+- Use proper RBAC to reduce unnecessary database queries
+- Lazy load heavy dependencies
+
+## Testing
+
+```typescript
+import { describe, it, expect } from "bun:test";
+import { Elysia } from "elysia";
+import { UsersModule } from "./modules/users";
+
+describe("Users Module", () => {
+	it("should get all users", async () => {
+		const app = new Elysia().use(UsersModule);
+		const response = await app.handle(
+			new Request("http://localhost/users")
+		);
+
+		expect(response.status).toBe(200);
+		const users = await response.json();
+		expect(Array.isArray(users)).toBe(true);
+	});
+
+	it("should create a user", async () => {
+		const app = new Elysia().use(UsersModule);
+		const response = await app.handle(
+			new Request("http://localhost/users", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					name: "John Doe",
+					email: "john@example.com",
+				}),
+			})
+		);
+
+		expect(response.status).toBe(200);
+		const user = await response.json();
+		expect(user.name).toBe("John Doe");
+	});
+});
+```
 
 ## Development Workflow
 
-1. **Define types** in `@repo/types` if shared
-2. **Update database schema** in `@repo/database` if needed
-3. **Generate and run migrations**: `bun run db:generate && bun run db:migrate`
-4. **Create service** with business logic
-5. **Create routes** using the service
-6. **Add validation** with Zod schemas
-7. **Test endpoints** with Swagger UI or HTTP client
-8. **Handle errors** appropriately
-9. **Document** with JSDoc and Swagger decorators
+1. **Check existing types** in `@repo/types` before creating new ones
+2. **Check existing utilities** in `@repo/utils` before creating helpers
+3. **Update database schema** in `@repo/database` if needed
+4. **Generate and run migrations**: `bun run db:generate && bun run db:migrate`
+5. **Create service** with business logic in `services/`
+6. **Create module** in `modules/` using `baseApp` or `baseAuthApp`
+7. **Add validation** with TypeBox schemas
+8. **Add documentation** with Swagger detail
+9. **Test endpoints** with Swagger UI at `/swagger`
+10. **Write tests** in `*.test.ts` files
+
+## Quick Reference
+
+### Creating a Public Module
+
+```typescript
+import { Elysia, t } from "elysia";
+import { baseApp } from "../../base";
+
+export const PublicModule = new Elysia({ prefix: "/public" })
+	.use(baseApp)
+	.get("/", () => ({ message: "Public endpoint" }));
+```
+
+### Creating a Protected Module
+
+```typescript
+import { Elysia, t } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+
+export const ProtectedModule = new Elysia({ prefix: "/protected" })
+	.use(baseAuthApp)
+	.get("/", ({ user }) => ({ message: `Hello ${user.name}` }));
+```
+
+### Creating an Admin-Only Module
+
+```typescript
+import { Elysia, t } from "elysia";
+import { baseAuthApp } from "../../base-auth";
+
+export const AdminModule = new Elysia({ prefix: "/admin" })
+	.use(baseAuthApp)
+	.get("/", ({ user }) => ({ message: "Admin only" }), {
+		rbac: { roles: ["admin"] }
+	});
+```

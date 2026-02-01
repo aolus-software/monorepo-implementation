@@ -2,8 +2,7 @@
 
 ## Next.js App Router Fundamentals
 
-This project uses **Next.js 16** with the **App Router** (not Pages Router). All
-routes are defined in the `app/` directory using the file-system based routing.
+This project uses **Next.js 16** with the **App Router** (not Pages Router). All routes are defined in the `app/` directory using the file-system based routing.
 
 ## Project Structure (Frontend Apps)
 
@@ -18,21 +17,41 @@ apps/web-{admin|user}/
 │   │   ├── page.tsx            # Dashboard page
 │   │   └── users/              # /dashboard/users
 │   │       └── page.tsx
-│   └── api/                    # API routes
-│       └── auth/
-│           └── route.ts
-├── components/                 # Shared components
-│   ├── ui/                     # UI components
-│   ├── forms/
-│   └── layouts/
+│   └── (auth)/                 # Route groups
+│       ├── login/
+│       └── register/
+├── components/                 # App-specific components
+│   ├── forms/                  # Form components
+│   ├── layouts/                # Layout components
+│   └── tables/                 # Table components
 ├── lib/                        # Utilities
 │   ├── api/                    # API client functions
-│   ├── utils.ts
+│   ├── utils.ts                # Utility functions
 │   └── hooks/                  # Custom hooks
 ├── public/                     # Static assets
 ├── package.json
 └── tsconfig.json
 ```
+
+**Important:** Backend API routes are handled by Elysia apps (`api-admin`, `api-user`), not Next.js API routes.
+
+## Before Creating New Code
+
+**ALWAYS check existing packages first:**
+
+1. **Check `packages/types`** before creating new types or interfaces
+   - Look in `packages/types/src/` for existing type definitions
+   - Reuse existing types from `@repo/types` instead of duplicating
+
+2. **Check `packages/utils`** before creating utility functions
+   - Look in `packages/utils/src/` for existing utilities
+   - Available categories: date, number, security, string
+   - Reuse existing utilities from `@repo/utils` instead of recreating
+
+3. **Check `packages/ui`** before creating UI components
+   - Look in `packages/ui/src/components/` for existing components
+   - Use shadcn/ui components from `@repo/ui` package
+   - Only create new components if they don't exist
 
 ## Core Patterns
 
@@ -40,13 +59,12 @@ apps/web-{admin|user}/
 
 ```typescript
 // app/users/page.tsx
-import { db } from "@repo/database";
-import { users } from "@repo/database/schema";
+import { getUsers } from "@/lib/api/users";
 
 // This is a Server Component (default)
 export default async function UsersPage() {
-  // Fetch data directly on the server
-  const allUsers = await db.select().from(users);
+  // Fetch data from Elysia backend
+  const allUsers = await getUsers();
 
   return (
     <div>
@@ -58,7 +76,7 @@ export default async function UsersPage() {
 
 // Server Components can be async
 // No useState, useEffect, or event handlers
-// Direct database access is allowed
+// All API calls go to Elysia backend
 ```
 
 ### 2. Client Components
@@ -70,17 +88,15 @@ export default async function UsersPage() {
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@repo/ui";
+import { createUser } from "@/lib/api/users";
 
 export function UserForm() {
   const [name, setName] = useState("");
 
   const mutation = useMutation({
-    mutationFn: async (data) => {
-      const response = await fetch("/api/users", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-      return response.json();
+    mutationFn: createUser,
+    onSuccess: () => {
+      setName("");
     },
   });
 
@@ -188,22 +204,40 @@ export default function NotFound() {
 
 ### 5. Data Fetching with TanStack Query
 
+**Note:** All API calls go to Elysia backend servers, not Next.js API routes.
+
 ```typescript
 // lib/api/users.ts
-export async function getUsers() {
-  const response = await fetch("http://localhost:3001/users");
+import type { User, NewUser } from "@repo/types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+export async function getUsers(): Promise<User[]> {
+  const response = await fetch(`${API_URL}/users`, {
+    headers: {
+      "Authorization": `Bearer ${getAuthToken()}`,
+    },
+  });
   if (!response.ok) throw new Error("Failed to fetch users");
   return response.json();
 }
 
-export async function createUser(data: { name: string; email: string }) {
-  const response = await fetch("http://localhost:3001/users", {
+export async function createUser(data: NewUser): Promise<User> {
+  const response = await fetch(`${API_URL}/users`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${getAuthToken()}`,
+    },
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error("Failed to create user");
   return response.json();
+}
+
+function getAuthToken(): string | null {
+  // Get token from cookies or localStorage
+  return localStorage.getItem("token");
 }
 
 // components/users-list.tsx
@@ -243,50 +277,89 @@ export function UsersList() {
 }
 ```
 
-### 6. Forms with Server Actions
+### 6. Forms with Zod Validation
+
+Use Zod for client-side and server-side validation:
 
 ```typescript
-// app/users/actions.ts
-"use server";
-
-import { db } from "@repo/database";
-import { users } from "@repo/database/schema";
-import { revalidatePath } from "next/cache";
+// lib/validations/user.ts
 import { z } from "zod";
 
-const createUserSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
+export const createUserSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  age: z.number().min(18, "Must be 18 or older").optional(),
 });
 
-export async function createUserAction(formData: FormData) {
-  const data = {
-    name: formData.get("name") as string,
-    email: formData.get("email") as string,
-  };
+export type CreateUserInput = z.infer<typeof createUserSchema>;
 
-  // Validate
-  const validated = createUserSchema.parse(data);
+// components/forms/user-form.tsx
+"use client";
 
-  // Insert into database
-  await db.insert(users).values(validated);
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import { Button, Input, Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@repo/ui";
+import { createUserSchema, type CreateUserInput } from "@/lib/validations/user";
+import { createUser } from "@/lib/api/users";
 
-  // Revalidate the page
-  revalidatePath("/users");
+export function UserForm() {
+  const form = useForm<CreateUserInput>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  });
 
-  return { success: true };
-}
+  const mutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      form.reset();
+      // Show success toast
+    },
+  });
 
-// app/users/page.tsx
-import { createUserAction } from "./actions";
+  function onSubmit(data: CreateUserInput) {
+    mutation.mutate(data);
+  }
 
-export default function UsersPage() {
   return (
-    <form action={createUserAction}>
-      <input name="name" placeholder="Name" />
-      <input name="email" type="email" placeholder="Email" />
-      <button type="submit">Create User</button>
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="Enter email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? "Creating..." : "Create User"}
+        </Button>
+      </form>
+    </Form>
   );
 }
 ```
@@ -335,34 +408,46 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### 8. Styling with Tailwind CSS
+### 8. Styling with Tailwind CSS and shadcn/ui
+
+Use Tailwind CSS utility classes and shadcn/ui components from `@repo/ui`:
 
 ```typescript
-// Using utility classes
-export function Button({ children }: { children: React.ReactNode }) {
+// Using shadcn/ui components
+import { Button, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
+import { cn } from "@repo/utils";
+import type { User } from "@repo/types";
+
+export function UserCard({ user }: { user: User }) {
   return (
-    <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-      {children}
-    </button>
+    <Card>
+      <CardHeader>
+        <CardTitle>{user.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">{user.email}</p>
+      </CardContent>
+    </Card>
   );
 }
 
-// Using cn() utility for conditional classes
-import { cn } from "@/lib/utils";
-
-export function Button({
+// Custom component with Tailwind CSS
+export function CustomButton({
   children,
-  variant = "default"
+  variant = "default",
+  className,
 }: {
   children: React.ReactNode;
   variant?: "default" | "outline";
+  className?: string;
 }) {
   return (
     <button
       className={cn(
-        "px-4 py-2 rounded-md transition-colors",
-        variant === "default" && "bg-blue-600 text-white hover:bg-blue-700",
-        variant === "outline" && "border border-blue-600 text-blue-600 hover:bg-blue-50"
+        "px-4 py-2 rounded-md transition-colors font-medium",
+        variant === "default" && "bg-primary text-primary-foreground hover:bg-primary/90",
+        variant === "outline" && "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        className
       )}
     >
       {children}
@@ -371,32 +456,100 @@ export function Button({
 }
 ```
 
-### 9. Using Shared UI Components
+### 9. Using Icons (Tabler Icons)
+
+Use Tabler Icons for all icon needs:
 
 ```typescript
-// Import from @repo/ui package
-import { Button, Input, Card } from "@repo/ui";
+// Install: bun add @tabler/icons-react
+import { IconUser, IconMail, IconSettings, IconLogout, IconPlus } from "@tabler/icons-react";
+import { Button } from "@repo/ui";
 
-export function UserForm() {
+export function UserProfile({ user }: { user: User }) {
   return (
-    <Card>
-      <form className="space-y-4">
-        <Input
-          name="name"
-          placeholder="Enter name"
-        />
-        <Input
-          name="email"
-          type="email"
-          placeholder="Enter email"
-        />
-        <Button type="submit">Create User</Button>
-      </form>
-    </Card>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <IconUser className="h-5 w-5 text-muted-foreground" />
+        <span>{user.name}</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <IconMail className="h-5 w-5 text-muted-foreground" />
+        <span>{user.email}</span>
+      </div>
+
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm">
+          <IconSettings className="h-4 w-4 mr-2" />
+          Settings
+        </Button>
+
+        <Button variant="destructive" size="sm">
+          <IconLogout className="h-4 w-4 mr-2" />
+          Logout
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Icon button
+export function AddButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button onClick={onClick} size="icon">
+      <IconPlus className="h-4 w-4" />
+    </Button>
   );
 }
 ```
 
+**Icon Sizing Guidelines:**
+- Small icons (buttons, inline): `h-4 w-4` (16px)
+- Medium icons (list items): `h-5 w-5` (20px)
+- Large icons (headers, cards): `h-6 w-6` (24px)
+- Extra large icons (empty states): `h-8 w-8` or larger
+
+### 10. Custom Hooks
+
+Before creating custom hooks, check `@repo/utils` for existing utilities:
+
+```typescript
+// lib/hooks/use-users.ts
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getUsers, createUser, deleteUser } from "@/lib/api/users";
+import type { User, NewUser } from "@repo/types";
+
+export function useUsers() {
+	return useQuery<User[]>({
+		queryKey: ["users"],
+		queryFn: getUsers,
+	});
+}
+
+export function useCreateUser() {
+	const queryClient = useQueryClient();
+
+	return useMutation<User, Error, NewUser>({
+		mutationFn: createUser,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["users"] });
+		},
+	});
+}
+
+export function useDeleteUser() {
+	const queryClient = useQueryClient();
+
+	return useMutation<void, Error, string>({
+		mutationFn: deleteUser,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["users"] });
+		},
+	});
+}
+
+// Usage in component
+"use client"
 ### 10. Custom Hooks
 
 ```typescript
@@ -418,229 +571,132 @@ export function useCreateUser() {
 		mutationFn: createUser,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["users"] });
-		},
-	});
-}
+		},Always Check Existing Packages First
 
-export function useDeleteUser() {
-	const queryClient = useQueryClient();
+Before creating any new code:
+- **Types**: Check `@repo/types` first
+- **Utilities**: Check `@repo/utils` first  
+- **UI Components**: Check `@repo/ui` first
+- **Only create new code if it doesn't already exist**
 
-	return useMutation({
-		mutationFn: deleteUser,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["users"] });
-		},
-	});
-}
-
-// Usage in component
-("use client");
-
-import { useUsers, useCreateUser } from "@/lib/hooks/use-users";
-
-export function UsersList() {
-	const { data: users, isLoading } = useUsers();
-	const createUser = useCreateUser();
-
-	// ...
-}
-```
-
-## Best Practices
-
-### 1. Server vs Client Components
+### 2. Server vs Client Components
 
 **Use Server Components for:**
 
 - Pages that fetch data
 - Layouts
 - Static content
-- Direct database access
+- SEO-critical content
 - Authentication checks
 
-**Use Client Components for:**
+**Us3. Data Fetching Strategy
 
-- Interactive elements (forms, buttons with onClick)
-- State management (useState, useReducer)
-- Effects (useEffect, useLayoutEffect)
-- Event handlers
-- Browser APIs (localStorage, window, etc.)
-
-### 2. Data Fetching Strategy
+All API calls go to Elysia backend servers:
 
 ```typescript
-// ✅ Good: Fetch on server, pass to client
-// app/users/page.tsx (Server Component)
-async function getUsersData() {
-  const response = await fetch("http://localhost:3001/users", {
-    cache: "no-store", // or next: { revalidate: 60 }
+// lib/api/client.ts
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+export async function apiClient<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const token = getAuthToken();
+  
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { "Authorization": `Bearer ${token}` }),
+      ...options?.headers,
+    },
   });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.statusText}`);
+  }
+
   return response.json();
+}
+
+// lib/api/users.ts
+import { apiClient } from "./client";
+import type { User, NewUser } from "@repo/types";
+
+export const getUsers = () => apiClient<User[]>("/users");
+
+export const createUser = (data: NewUser) =>
+  apiClient<User>("/users", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+// app/users/page.tsx (Server Component)
+import { getUsers } from "@/lib/api/users";
+
+async function getUsersData() {
+  return await getUsers();
 }
 
 export default async function UsersPage() {
   const users = await getUsersData();
-
   return <UsersList initialData={users} />;
 }
 
-// components/users-list.tsx (Client Component)
+// c6mponents/users-list.tsx (Client Component)
 "use client";
 
-export function UsersList({ initialData }) {
-  const { data } = useQuery({
-    queryKey: ["users"],
-    queryFn: getUsers,
-    initialData,
-  });
-
-  return <div>{/* Render users */}</div>;
-}
-```
-
-### 3. Environment Variables
+import { useQuery } from "@tanstack/react-query";
+import { getUsers } from "@/lib/api/users
+## B4. Environment Variables
 
 ```typescript
 // Access client-side env vars (must be prefixed with NEXT_PUBLIC_)
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-// Access server-side env vars (in Server Components or API routes)
-const dbUrl = process.env.DATABASE_URL;
-```
+// Server-side env vars (in Server Components only)
+const secretKey = process.env.SECRET_KEY;
 
-### 4. Image Optimization
+// Note: Database access should be done through Elysia backend APIs, not directly in Next.js
+- St5. Image Optimization
 
 ```typescript
 import Image from "next/image";
+import { IconUser } from "@tabler/icons-react";
 
-export function UserAvatar({ src, alt }: { src: string; alt: string }) {
+export function UserAvatar({ 
+  src, 
+  alt, 
+  size = 48 
+}: { 
+  src?: string; 
+  alt: string;
+  size?: number;
+}) {
+  // Fallback icon if no image
+  if (!src) {
+    return (
+      <div className="flex items-center justify-center rounded-full bg-muted">
+        <IconUser className="h-6 w-6 text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <Image
       src={src}
       alt={alt}
-      width={48}
-      height={48}
-      className="rounded-full"
-      priority={false} // Set true for above-the-fold images
-    />
-  );
-}
-```
-
-### 5. Metadata
-
+      width={size}
+      height={size}
+      className="rounded-full object-cover"
+      priority={false}
 ```typescript
-// Static metadata
-export const metadata = {
-	title: "Users",
-	description: "Manage users",
-};
-
-// Dynamic metadata
-export async function generateMetadata({ params }) {
-	const user = await getUser(params.id);
-
-	return {
-		title: user.name,
-		description: `Profile of ${user.name}`,
-	};
-}
+// Good: Fetch on server, pass to client
+Access server-side env vars (in Server Components or API routes)
+const dbUrl = process.env.DATABASE_URL;
 ```
 
-### 6. Route Handlers (API Routes)
-
-```typescript
-// app/api/users/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@repo/database";
-import { users } from "@repo/database/schema";
-
-export async function GET(request: NextRequest) {
-	const allUsers = await db.select().from(users);
-	return NextResponse.json(allUsers);
-}
-
-export async function POST(request: NextRequest) {
-	const body = await request.json();
-	const [user] = await db.insert(users).values(body).returning();
-	return NextResponse.json(user, { status: 201 });
-}
-
-// app/api/users/[id]/route.ts
-export async function GET(
-	request: NextRequest,
-	{ params }: { params: { id: string } },
-) {
-	const user = await db.query.users.findFirst({
-		where: eq(users.id, params.id),
-	});
-
-	if (!user) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
-	}
-
-	return NextResponse.json(user);
-}
-```
-
-### 7. Error Boundaries
-
-```typescript
-// app/error.tsx
-"use client";
-
-import { useEffect } from "react";
-
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    // Log to error reporting service
-    console.error(error);
-  }, [error]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold">Something went wrong!</h2>
-        <p className="text-gray-600 mt-2">{error.message}</p>
-        <button
-          onClick={reset}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          Try again
-        </button>
-      </div>
-    </div>
-  );
-}
-```
-
-### 8. Suspense Boundaries
-
-```typescript
-import { Suspense } from "react";
-
-export default function DashboardPage() {
-  return (
-    <div>
-      <h1>Dashboard</h1>
-
-      <Suspense fallback={<div>Loading users...</div>}>
-        <UsersList />
-      </Suspense>
-
-      <Suspense fallback={<div>Loading stats...</div>}>
-        <Stats />
-      </Suspense>
-    </div>
-  );
-}
-```
+### 4. Image Optimization
 
 ## Common Patterns
 
@@ -723,15 +779,16 @@ export function UsersList() {
 
 ## Common Pitfalls
 
-1. **Don't use "use client" unnecessarily** - Server Components are more
-   performant
-2. **Don't fetch data in Client Components** when you can fetch on the server
-3. **Don't forget cache strategies** - Use `cache: "no-store"` or `revalidate`
-   appropriately
-4. **Remember env var prefix** - Client-side vars need `NEXT_PUBLIC_` prefix
-5. **Don't mix async with "use client"** - Client Components can't be async
-6. **Use the Image component** for images, not `<img>`
-7. **Prefer Server Actions** over API routes for mutations when possible
+1. **Don't create Next.js API routes** - Use Elysia backend for all APIs
+2. **Don't access database directly** - Call Elysia APIs instead
+3. **Always check existing packages** - `@repo/types`, `@repo/utils`, `@repo/ui` before creating new code
+4. **Don't use "use client" unnecessarily** - Server Components are more performant
+5. **Don't fetch data in Client Components** when you can fetch on the server
+6. **Remember env var prefix** - Client-side vars need `NEXT_PUBLIC_` prefix
+7. **Don't mix async with "use client"** - Client Components can't be async
+8. **Use Tabler Icons** - Not other icon libraries
+9. **Use shadcn/ui components** - From `@repo/ui` package
+10. **Use Zod for validation** - Not other validation libraries
 
 ## Performance Tips
 
@@ -740,18 +797,21 @@ export function UsersList() {
 - Use `<Suspense>` for granular loading states
 - Optimize images with Next.js Image component
 - Use dynamic imports for large client-side libraries
-- Implement proper caching strategies
 - Use React Query for client-side caching
+- Call Elysia backend APIs - never access database directly
+- Reuse components from `@repo/ui` to reduce bundle size
 
 ## Development Workflow
 
-1. **Define routes** in `app/` directory
-2. **Create layouts** for shared UI
-3. **Build components** - Server Components first, Client when needed
-4. **Add shared components** to `@repo/ui` if reusable across apps
-5. **Implement data fetching** - Server Components or React Query
-6. **Add loading/error states**
-7. **Style with Tailwind** CSS
-8. **Test in development**: `bun run dev`
-9. **Type-check**: `bun run typecheck`
-10. **Build**: `bun run build`
+1. **Check existing packages** - `@repo/types`, `@repo/utils`, `@repo/ui` first
+2. **Define routes** in `app/` directory
+3. **Create layouts** for shared UI
+4. **Build components** - Use `@repo/ui`, Server Components first, Client when needed
+5. **Add icons** - Use Tabler Icons
+6. **Add validation** - Use Zod schemas in `lib/validations/`
+7. **Implement data fetching** - Create API client functions, use React Query
+8. **Add loading/error states** - Use `loading.tsx` and `error.tsx`
+9. **Style with Tailwind CSS** and shadcn/ui components
+10. **Test in development**: `bun run dev`
+11. **Type-check**: `bun run typecheck`
+12. **Build**: `bun run build`

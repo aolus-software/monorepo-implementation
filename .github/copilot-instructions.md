@@ -2,28 +2,28 @@
 
 ## Project Overview
 
-This is a **monorepo** built with **Turborepo** and **Bun**, containing multiple
-applications and shared packages.
+This is a **monorepo example** built with **Turborepo** and **Bun**, demonstrating clean architecture principles with multiple applications and shared packages.
 
 ### Architecture
 
 - **Monorepo Manager**: Turborepo
 - **Package Manager**: Bun
 - **Workspace Structure**: Apps and packages pattern
+- **Ports Used**: 4 ports total (2 Next.js frontends, 2 Elysia backends)
 
 ### Applications
 
-#### API Applications (Elysia)
+#### Backend Applications (Elysia)
 
-- `apps/api-admin` - Admin API service
-- `apps/api-user` - User-facing API service
+- `apps/api-admin` - Admin API service (Elysia + Bun)
+- `apps/api-user` - User-facing API service (Elysia + Bun)
 - **Framework**: Elysia.js (modern TypeScript web framework for Bun)
 - **Runtime**: Bun
 
-#### Web Applications (Next.js)
+#### Frontend Applications (Next.js)
 
-- `apps/web-admin` - Admin dashboard
-- `apps/web-user` - User-facing web app
+- `apps/web-admin` - Admin dashboard (Next.js 16 with App Router)
+- `apps/web-user` - User-facing web app (Next.js 16 with App Router)
 - **Framework**: Next.js 16 with App Router
 - **UI Library**: Tailwind CSS v4 + shadcn/ui components
 - **Data Fetching**: TanStack Query (React Query)
@@ -33,8 +33,123 @@ applications and shared packages.
 - `packages/database` - Drizzle ORM database client and schema
 - `packages/env` - Environment variable validation
 - `packages/types` - Shared TypeScript types
+- `packages/utils` - Shared utility functions
 - `packages/config` - Shared configuration (ESLint, TypeScript)
 - `packages/ui` - Shared UI components
+- `packages/elysia` - Shared Elysia plugins and utilities
+- `packages/mailer` - Email service utilities
+
+## Project Structure
+
+```
+monorepo-implementation/
+├── apps/
+│   ├── api-admin/                  # Backend: Admin API (Elysia)
+│   │   ├── src/
+│   │   │   ├── index.ts           # Entry point
+│   │   │   ├── base.ts            # Base Elysia instance
+│   │   │   ├── base-auth.ts       # Auth-protected base instance
+│   │   │   ├── env.ts             # Environment validation
+│   │   │   ├── db.ts              # Database connection
+│   │   │   ├── mailer.ts          # Mailer instance
+│   │   │   ├── modules/           # Feature modules
+│   │   │   │   ├── auth/          # Authentication module
+│   │   │   │   ├── home/          # Home module
+│   │   │   │   └── settings/      # Settings module
+│   │   │   └── services/          # Business logic services
+│   │   │       └── email.service.ts
+│   │   └── storage/logs/          # Application logs
+│   │
+│   ├── api-user/                   # Backend: User API (Elysia)
+│   │   ├── src/
+│   │   │   ├── index.ts           # Entry point
+│   │   │   ├── base.ts            # Base Elysia instance
+│   │   │   ├── base-auth.ts       # Auth-protected base instance
+│   │   │   ├── env.ts             # Environment validation
+│   │   │   ├── db.ts              # Database connection
+│   │   │   └── modules/           # Feature modules
+│   │   │       └── home/          # Home module
+│   │   └── storage/logs/          # Application logs
+│   │
+│   ├── web-admin/                  # Frontend: Admin Dashboard (Next.js)
+│   │   ├── app/                   # Next.js App Router
+│   │   │   ├── layout.tsx         # Root layout
+│   │   │   ├── page.tsx           # Home page
+│   │   │   └── globals.css        # Global styles
+│   │   ├── public/                # Static assets
+│   │   └── [config files]
+│   │
+│   └── web-user/                   # Frontend: User Web App (Next.js)
+│       ├── app/                   # Next.js App Router
+│       │   ├── layout.tsx         # Root layout
+│       │   ├── page.tsx           # Home page
+│       │   └── globals.css        # Global styles
+│       ├── public/                # Static assets
+│       └── [config files]
+│
+├── packages/
+│   ├── config/                    # Shared configs (ESLint, TypeScript)
+│   │   ├── eslint.config.mjs
+│   │   ├── prettier.config.js
+│   │   ├── tsconfig.base.json
+│   │   ├── tsconfig.elysia.json
+│   │   ├── tsconfig.next.json
+│   │   └── src/index.ts
+│   │
+│   ├── database/                  # Drizzle ORM setup
+│   │   ├── src/
+│   │   │   ├── client.ts          # Database client
+│   │   │   ├── index.ts           # Exports
+│   │   │   ├── schema/            # Database schemas
+│   │   │   ├── repository/        # Data access layer
+│   │   │   └── seed/              # Database seeds
+│   │   └── migrations/            # Database migrations
+│   │
+│   ├── elysia/                    # Shared Elysia utilities
+│   │   └── src/
+│   │       ├── index.ts           # Exports
+│   │       ├── config/            # Shared configs
+│   │       ├── errors/            # Error classes
+│   │       ├── guards/            # Auth guards
+│   │       ├── logger/            # Logger plugin
+│   │       ├── plugins/           # Elysia plugins
+│   │       └── utils/             # Helper functions
+│   │
+│   ├── env/                       # Environment validation
+│   │   └── src/index.ts           # Zod schemas for env vars
+│   │
+│   ├── mailer/                    # Email service
+│   │   └── src/
+│   │       ├── index.ts           # Exports
+│   │       └── mailer.service.ts  # Mailer implementation
+│   │
+│   ├── types/                     # Shared TypeScript types
+│   │   └── src/
+│   │       ├── index.ts           # Exports
+│   │       ├── datatable/         # Datatable types
+│   │       ├── default/           # Common types
+│   │       ├── elysia/            # Elysia-specific types
+│   │       └── repository/        # Repository types
+│   │
+│   ├── ui/                        # Shared UI components
+│   │   ├── src/components/        # React components
+│   │   ├── tailwind.config.ts     # Tailwind config
+│   │   └── components.json        # shadcn/ui config
+│   │
+│   └── utils/                     # Shared utility functions
+│       └── src/
+│           ├── index.ts           # Exports
+│           ├── date/              # Date utilities
+│           ├── number/            # Number utilities
+│           ├── security/          # Security utilities
+│           └── string/            # String utilities
+│
+├── docker-compose.yml             # Docker services
+├── drizzle.config.ts              # Drizzle ORM config
+├── turbo.json                     # Turborepo config
+├── package.json                   # Root package.json
+└── tsconfig.json                  # Root TypeScript config
+```
 
 ## Code Style and Best Practices
 
@@ -45,6 +160,72 @@ applications and shared packages.
 - Use type inference where appropriate
 - Prefer interfaces for object shapes
 - Use Zod for runtime validation
+
+### Before Creating New Code
+
+**ALWAYS check existing packages first:**
+
+1. **Check `packages/types`** before creating new types or interfaces
+   - Look in `packages/types/src/` for existing type definitions
+   - Reuse existing types from `@repo/types` instead of duplicating
+   
+2. **Check `packages/utils`** before creating utility functions
+   - Look in `packages/utils/src/` for existing utilities
+   - Available categories: date, number, security, string
+   - Reuse existing utilities from `@repo/utils` instead of recreating
+
+### Code Comments Policy
+
+**Keep comments minimal and meaningful:**
+
+- Comment each **code block** (if, else, switch, function) with its purpose
+- Do NOT add comments every 2-10 lines
+- Comments should explain **why**, not **what**
+- Example of good commenting:
+
+```typescript
+// Calculate user discount based on membership tier
+function calculateDiscount(user: User): number {
+  // Premium members get higher discount
+  if (user.tier === 'premium') {
+    return 0.2;
+  }
+  
+  // Standard members get basic discount  
+  if (user.tier === 'standard') {
+    return 0.1;
+  }
+  
+  // Free tier gets no discount
+  return 0;
+}
+```
+
+### Documentation and Examples
+
+**DO NOT create unless explicitly requested:**
+
+- README files after implementing features
+- Example files after completing tasks
+- Documentation files for code changes
+- Tutorial or guide files
+
+**Focus on delivering working code only.**
+
+### Icons and Emojis
+
+**NEVER use icons or emojis in:**
+
+- Code files (TypeScript, JavaScript, etc.)
+- Comments
+- Console logs
+- Error messages
+- API responses
+- UI component code
+
+**Exception**: Icons are acceptable only in:
+- UI components where explicitly required by design
+- When user specifically requests them
 
 ### Backend (Elysia)
 
