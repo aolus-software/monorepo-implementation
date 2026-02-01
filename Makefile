@@ -1,4 +1,4 @@
-.PHONY: help dev dev-web dev-api build build-web build-api build-packages start lint lint-fix format format-check typecheck clean clean-dist clean-all clean-build clean-typecheck db-generate db-migrate db-studio db-push db-pull
+.PHONY: help dev dev-web dev-api build build-web build-api build-packages start lint lint-fix format format-check typecheck clean clean-dist clean-all clean-build clean-typecheck db-generate db-migrate db-studio db-push db-pull db-seed db-reset
 
 help:
 	@echo "Available commands:"
@@ -31,6 +31,8 @@ help:
 	@echo "Database:"
 	@echo "  make db-generate    - Generate database migrations"
 	@echo "  make db-migrate     - Run database migrations"
+	@echo "  make db-seed        - Seed database with initial data"
+	@echo "  make db-reset       - Reset database (migrate + seed)"
 	@echo "  make db-studio      - Open database studio"
 	@echo "  make db-push        - Push database schema changes"
 	@echo "  make db-pull        - Pull database schema changes"
@@ -143,6 +145,15 @@ db-generate:
 
 db-migrate:
 	bun run db:migrate
+
+db-seed:
+	bun run db:seed
+
+db-reset:
+	@echo "🔄 Resetting database..."
+	@$(MAKE) db-migrate
+	@$(MAKE) db-seed
+	@echo "✅ Database reset complete!"
 
 db-studio:
 	bun run db:studio

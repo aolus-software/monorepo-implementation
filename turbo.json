@@ -53,6 +53,10 @@
 		},
 		"db:pull": {
 			"cache": false
+		},
+		"seed": {
+			"cache": false,
+			"outputs": []
 		}
 	}
 }
