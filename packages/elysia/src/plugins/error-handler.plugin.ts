@@ -34,7 +34,7 @@ export const ErrorHandlerPlugin = new Elysia({
 				status: 400,
 				success: false,
 				message: error.message || "Bad Request",
-				errors: error.error || [],
+				errors: error.error ?? [],
 			};
 		}
 
@@ -48,7 +48,7 @@ export const ErrorHandlerPlugin = new Elysia({
 				status: 422,
 				success: false,
 				message: error.message || "Unprocessable Entity",
-				errors: error.error || [],
+				errors: error.error ?? [],
 			};
 		}
 
@@ -98,13 +98,13 @@ export const ErrorHandlerPlugin = new Elysia({
 
 		if (code === "VALIDATION") {
 			set.status = 422;
-			log?.warn({ error }, "Request validation failed");
+			log.warn({ error }, "Request validation failed");
 
 			const validationError = error as ValidationErrorDetails;
 			const errors =
-				validationError?.validator?.errors?.map((err: ValidationError) => ({
-					field: err.path?.replace("/", "") || "unknown",
-					message: err.message || "Validation failed",
+				validationError.validator?.errors?.map((err: ValidationError) => ({
+					field: err.path?.replace("/", "") ?? "unknown",
+					message: err.message ?? "Validation failed",
 				})) ?? [];
 
 			return {

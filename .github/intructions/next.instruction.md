@@ -2,7 +2,8 @@
 
 ## Next.js App Router Fundamentals
 
-This project uses **Next.js 16** with the **App Router** (not Pages Router). All routes are defined in the `app/` directory using the file-system based routing.
+This project uses **Next.js 16** with the **App Router** (not Pages Router). All
+routes are defined in the `app/` directory using the file-system based routing.
 
 ## Project Structure (Frontend Apps)
 
@@ -33,7 +34,8 @@ apps/web-{admin|user}/
 └── tsconfig.json
 ```
 
-**Important:** Backend API routes are handled by Elysia apps (`api-admin`, `api-user`), not Next.js API routes.
+**Important:** Backend API routes are handled by Elysia apps (`api-admin`,
+`api-user`), not Next.js API routes.
 
 ## Before Creating New Code
 
@@ -504,6 +506,7 @@ export function AddButton({ onClick }: { onClick: () => void }) {
 ```
 
 **Icon Sizing Guidelines:**
+
 - Small icons (buttons, inline): `h-4 w-4` (16px)
 - Medium icons (list items): `h-5 w-5` (20px)
 - Large icons (headers, cards): `h-6 w-6` (24px)
@@ -513,7 +516,7 @@ export function AddButton({ onClick }: { onClick: () => void }) {
 
 Before creating custom hooks, check `@repo/utils` for existing utilities:
 
-```typescript
+````typescript
 // lib/hooks/use-users.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getUsers, createUser, deleteUser } from "@/lib/api/users";
@@ -575,7 +578,7 @@ export function useCreateUser() {
 
 Before creating any new code:
 - **Types**: Check `@repo/types` first
-- **Utilities**: Check `@repo/utils` first  
+- **Utilities**: Check `@repo/utils` first
 - **UI Components**: Check `@repo/ui` first
 - **Only create new code if it doesn't already exist**
 
@@ -602,7 +605,7 @@ export async function apiClient<T>(
   options?: RequestInit
 ): Promise<T> {
   const token = getAuthToken();
-  
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -664,12 +667,12 @@ const secretKey = process.env.SECRET_KEY;
 import Image from "next/image";
 import { IconUser } from "@tabler/icons-react";
 
-export function UserAvatar({ 
-  src, 
-  alt, 
-  size = 48 
-}: { 
-  src?: string; 
+export function UserAvatar({
+  src,
+  alt,
+  size = 48
+}: {
+  src?: string;
   alt: string;
   size?: number;
 }) {
@@ -694,7 +697,7 @@ export function UserAvatar({
 // Good: Fetch on server, pass to client
 Access server-side env vars (in Server Components or API routes)
 const dbUrl = process.env.DATABASE_URL;
-```
+````
 
 ### 4. Image Optimization
 
@@ -781,8 +784,10 @@ export function UsersList() {
 
 1. **Don't create Next.js API routes** - Use Elysia backend for all APIs
 2. **Don't access database directly** - Call Elysia APIs instead
-3. **Always check existing packages** - `@repo/types`, `@repo/utils`, `@repo/ui` before creating new code
-4. **Don't use "use client" unnecessarily** - Server Components are more performant
+3. **Always check existing packages** - `@repo/types`, `@repo/utils`, `@repo/ui`
+   before creating new code
+4. **Don't use "use client" unnecessarily** - Server Components are more
+   performant
 5. **Don't fetch data in Client Components** when you can fetch on the server
 6. **Remember env var prefix** - Client-side vars need `NEXT_PUBLIC_` prefix
 7. **Don't mix async with "use client"** - Client Components can't be async
@@ -806,7 +811,8 @@ export function UsersList() {
 1. **Check existing packages** - `@repo/types`, `@repo/utils`, `@repo/ui` first
 2. **Define routes** in `app/` directory
 3. **Create layouts** for shared UI
-4. **Build components** - Use `@repo/ui`, Server Components first, Client when needed
+4. **Build components** - Use `@repo/ui`, Server Components first, Client when
+   needed
 5. **Add icons** - Use Tabler Icons
 6. **Add validation** - Use Zod schemas in `lib/validations/`
 7. **Implement data fetching** - Create API client functions, use React Query

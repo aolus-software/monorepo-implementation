@@ -1,17 +1,11 @@
-export class UnauthorizedError extends Error {
-	code: number;
+import { UnauthorizedError as BaseUnauthorizedError } from "@repo/types";
 
-	/**
-	 * Represents an error when a user is not authorized to access a resource.
-	 * @param {string} message - The error message.
-	 */
+export class UnauthorizedError extends BaseUnauthorizedError {
 	constructor(message = "Unauthorized") {
 		super(message);
-		this.name = "UnauthorizedError";
-		this.code = 401;
 	}
 
-	toResponse() {
+	toResponse(): Response {
 		return Response.json(
 			{
 				status: 401,

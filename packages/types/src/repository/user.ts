@@ -1,4 +1,12 @@
-import { UserStatusEnum } from "@repo/database";
+// User status enum
+export const UserStatus = {
+	ACTIVE: "active",
+	INACTIVE: "inactive",
+	SUSPENDED: "suspended",
+	BLOCKED: "blocked",
+} as const;
+
+export type UserStatusEnum = (typeof UserStatus)[keyof typeof UserStatus];
 
 export interface UserInformation {
 	id: string;
@@ -8,7 +16,7 @@ export interface UserInformation {
 	permissions: string[];
 }
 
-export type UserList = {
+export interface UserList {
 	id: string;
 	name: string;
 	email: string;
@@ -17,18 +25,18 @@ export type UserList = {
 	remark: string | null;
 	created_at: Date;
 	updated_at: Date;
-};
+}
 
-export type UserCreate = {
+export interface UserCreate {
 	name: string;
 	email: string;
 	password: string;
 	status?: UserStatusEnum;
 	remark?: string;
 	role_ids?: string[];
-};
+}
 
-export type UserDetail = {
+export interface UserDetail {
 	id: string;
 	name: string;
 	email: string;
@@ -40,13 +48,13 @@ export type UserDetail = {
 	}[];
 	created_at: Date;
 	updated_at: Date;
-};
+}
 
-export type UserForAuth = {
+export interface UserForAuth {
 	id: string;
 	name: string;
 	email: string;
 	password: string;
 	status: UserStatusEnum | null;
 	email_verified_at: Date | null;
-};
+}

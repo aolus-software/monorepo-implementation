@@ -1,9 +1,12 @@
 import bearer from "@elysiajs/bearer";
-import jwt, { JWTOption } from "@elysiajs/jwt";
+import type { JWTOption } from "@elysiajs/jwt";
+import jwt from "@elysiajs/jwt";
+import type { DbClient } from "@repo/database";
+import { UserRepository } from "@repo/database";
+import type { UserInformation } from "@repo/types";
 import Elysia from "elysia";
-import { DbClient, UserRepository } from "@repo/database";
-import { UserInformation } from "@repo/types";
-import { UnauthorizedError, ForbiddenError } from "../errors";
+
+import { ForbiddenError, UnauthorizedError } from "../errors";
 
 // ============================================
 // TYPES & INTERFACES
@@ -21,8 +24,8 @@ interface JWTPayload {
  * Cache interface for optional caching support
  */
 interface CacheProvider {
-	get<T>(key: string): Promise<T | null>;
-	set<T>(key: string, value: T, ttl?: number): Promise<void>;
+	get(key: string): Promise<UserInformation | null>;
+	set(key: string, value: UserInformation, ttl?: number): Promise<void>;
 	delete(key: string): Promise<void>;
 }
 
@@ -100,7 +103,7 @@ interface RBACGuardOptions {
 /**
  * Generate cache key for user information
  */
-const getUserCacheKey = (userId: string, prefix: string = "user:"): string => {
+const getUserCacheKey = (userId: string, prefix = "user:"): string => {
 	return `${prefix}${userId}`;
 };
 
@@ -110,7 +113,7 @@ const getUserCacheKey = (userId: string, prefix: string = "user:"): string => {
 const checkRoles = (
 	user: UserInformation,
 	requiredRoles: string[],
-	superuserRole: string = "superuser",
+	superuserRole = "superuser",
 ): boolean => {
 	if (user.roles.includes(superuserRole)) {
 		return true;
@@ -125,7 +128,7 @@ const checkRoles = (
 const checkPermissions = (
 	user: UserInformation,
 	requiredPermissions: string[],
-	superuserRole: string = "superuser",
+	superuserRole = "superuser",
 ): boolean => {
 	if (user.roles.includes(superuserRole)) {
 		return true;
@@ -171,7 +174,7 @@ const checkPermissions = (
  *   )
  * ```
  */
-export const AuthPlugin = (options: AuthPluginOptions) => {
+export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
 	const {
 		jwt: jwtConfig,
 		db,
@@ -181,14 +184,14 @@ export const AuthPlugin = (options: AuthPluginOptions) => {
 	} = options;
 
 	const errorMessages = {
-		noToken: messages.noToken || "Authentication required",
-		invalidToken: messages.invalidToken || "Invalid authentication token",
-		userNotFound: messages.userNotFound || "User not found",
+		noToken: messages.noToken ?? "Authentication required",
+		invalidToken: messages.invalidToken ?? "Invalid authentication token",
+		userNotFound: messages.userNotFound ?? "User not found",
 	};
 
 	// Setup JWT with default values
 	const jwtOptions: JWTOption<string> = {
-		name: jwtConfig.name || "jwt",
+		name: jwtConfig.name ?? "jwt",
 		secret: jwtConfig.secret,
 		exp: jwtConfig.exp,
 		alg: jwtConfig.alg,
@@ -199,18 +202,14 @@ export const AuthPlugin = (options: AuthPluginOptions) => {
 			.use(jwt(jwtOptions))
 			.use(bearer())
 			// Derive user information from bearer token
-			.derive({ as: "global" }, async ({ bearer, jwt }) => {
+			.derive({ as: "global" }, async (context) => {
 				// If auth is not required, allow request without token
-
-
-				console.info('requireAuth:', requireAuth, 'bearer:', bearer);
-
-				if (!requireAuth && !bearer) {
+				if (!requireAuth && !context.bearer) {
 					return { user: null as UserInformation | null };
 				}
 
 				// If auth is required, token must be present
-				if (!bearer) {
+				if (!context.bearer) {
 					throw new UnauthorizedError(errorMessages.noToken);
 				}
 
@@ -218,7 +217,9 @@ export const AuthPlugin = (options: AuthPluginOptions) => {
 
 				try {
 					// Verify JWT token
-					const payload = (await jwt.verify(bearer)) as JWTPayload | false;
+					const payload = (await context.jwt.verify(context.bearer)) as
+						| JWTPayload
+						| false;
 
 					if (!payload || typeof payload === "boolean" || !payload.id) {
 						throw new UnauthorizedError(errorMessages.invalidToken);
@@ -226,9 +227,11 @@ export const AuthPlugin = (options: AuthPluginOptions) => {
 
 					// Ensure payload.id is a string
 					const userId =
-						typeof payload.id === "string" || typeof payload.id === "number"
-							? String(payload.id)
-							: null;
+						typeof payload.id === "string"
+							? payload.id
+							: typeof payload.id === "number"
+								? String(payload.id)
+								: null;
 
 					if (!userId) {
 						throw new UnauthorizedError("Invalid user ID in token");
@@ -238,26 +241,29 @@ export const AuthPlugin = (options: AuthPluginOptions) => {
 					if (cache?.provider) {
 						const cacheKey = getUserCacheKey(
 							userId,
-							cache.keyPrefix || "user:",
+							cache.keyPrefix ?? "user:",
 						);
-						user = await cache.provider.get<UserInformation>(cacheKey);
+						user = await cache.provider.get(cacheKey);
 					}
 
 					// If not in cache, fetch from database
 					if (!user) {
 						const userRepo = UserRepository(db);
-						user = await userRepo.UserInformation(userId);
+						// UserInformation throws UnauthorizedError if user not found
+
+						const userInfo = await userRepo.UserInformation(userId);
+						user = userInfo;
 
 						// Cache the user information if cache is available
-						if (user && cache?.provider) {
+						if (cache?.provider) {
 							const cacheKey = getUserCacheKey(
 								userId,
-								cache.keyPrefix || "user:",
+								cache.keyPrefix ?? "user:",
 							);
-							await cache.provider.set(cacheKey, user, cache.ttl || 3600);
+							await cache.provider.set(cacheKey, user, cache.ttl ?? 3600);
 						}
 					}
-				} catch (error) {
+				} catch (error: unknown) {
 					// If error is already an UnauthorizedError, re-throw it
 					if (error instanceof UnauthorizedError) {
 						throw error;
@@ -266,22 +272,25 @@ export const AuthPlugin = (options: AuthPluginOptions) => {
 					throw new UnauthorizedError(errorMessages.invalidToken);
 				}
 
-				// Ensure user exists
-				if (!user) {
-					throw new UnauthorizedError(errorMessages.userNotFound);
-				}
-
 				return { user };
 			})
-			// Add RBAC guard helper
 			.macro(({ onBeforeHandle }) => ({
+				/**
+				 * RBAC Guard Macro
+				 * Usage: .rbac({ roles: [...], permissions: [...] })
+				 */
+				// todo: rebuild the auth macro to avoid this unsafe cast
 				rbac(config: RBACGuardOptions) {
-					onBeforeHandle(({ user }) => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+					onBeforeHandle((context) => {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+						const user = context.user as UserInformation | null;
+
 						if (!user) {
 							throw new UnauthorizedError(errorMessages.noToken);
 						}
 
-						const superuserRole = config.superuserRole || "superuser";
+						const superuserRole = config.superuserRole ?? "superuser";
 
 						// Check roles if specified
 						if (config.roles && config.roles.length > 0) {
@@ -316,7 +325,7 @@ export const AuthPlugin = (options: AuthPluginOptions) => {
 export const requireRoles = (
 	user: UserInformation,
 	roles: string[],
-	superuserRole: string = "superuser",
+	superuserRole = "superuser",
 ): void => {
 	if (!checkRoles(user, roles, superuserRole)) {
 		throw new ForbiddenError(
@@ -331,7 +340,7 @@ export const requireRoles = (
 export const requirePermissions = (
 	user: UserInformation,
 	permissions: string[],
-	superuserRole: string = "superuser",
+	superuserRole = "superuser",
 ): void => {
 	if (!checkPermissions(user, permissions, superuserRole)) {
 		throw new ForbiddenError(

@@ -1,14 +1,15 @@
 import { ResponseUtils } from "@repo/elysia";
 import Elysia from "elysia";
+
 import { baseAuthApp } from "../../../base-auth";
 import { SelectOptionService } from "./service";
 
 /**
  * Select Option Module
- * 
+ *
  * Provides select options for various resources in settings.
  * All endpoints require authentication and superuser role.
- * 
+ *
  * Available options:
  * - Permissions: For role management
  * - Roles: For user management
@@ -21,13 +22,13 @@ export const SelectOptionModule = new Elysia({
 	},
 })
 	.use(baseAuthApp)
-	
+
 	// ============================================
 	// GET PERMISSION SELECT OPTIONS
 	// ============================================
 	.get(
 		"/permissions",
-		async ({ user }) => {
+		async () => {
 			const permissions = await SelectOptionService.permissionSelect();
 			return ResponseUtils.success(
 				permissions,
@@ -38,18 +39,19 @@ export const SelectOptionModule = new Elysia({
 		{
 			detail: {
 				summary: "Get permission select options",
-				description: "Retrieve select options for permissions. Requires authentication and superuser role.",
+				description:
+					"Retrieve select options for permissions. Requires authentication and superuser role.",
 			},
-			rbac: { roles: ["superuser"] }
+			rbac: { roles: ["superuser"] },
 		},
 	)
-	
+
 	// ============================================
 	// GET ROLE SELECT OPTIONS
 	// ============================================
 	.get(
 		"/roles",
-		async ({ user }) => {
+		async () => {
 			const roles = await SelectOptionService.roleSelect();
 			return ResponseUtils.success(
 				roles,
@@ -60,8 +62,9 @@ export const SelectOptionModule = new Elysia({
 		{
 			detail: {
 				summary: "Get role select options",
-				description: "Retrieve select options for roles. Requires authentication and superuser role.",
+				description:
+					"Retrieve select options for roles. Requires authentication and superuser role.",
 			},
-			rbac: { roles: ["superuser"] }
+			rbac: { roles: ["superuser"] },
 		},
 	);

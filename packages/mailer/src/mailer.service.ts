@@ -1,4 +1,4 @@
-import nodemailer, { Transporter, SendMailOptions } from "nodemailer";
+import nodemailer, { type SendMailOptions, type Transporter } from "nodemailer";
 
 export interface MailerConfig {
 	host: string;
@@ -16,11 +16,11 @@ export interface EmailOptions {
 	subject: string;
 	text?: string;
 	html?: string;
-	attachments?: Array<{
+	attachments?: {
 		filename: string;
 		content?: string | Buffer;
 		path?: string;
-	}>;
+	}[];
 	cc?: string | string[];
 	bcc?: string | string[];
 	replyTo?: string;
@@ -54,7 +54,7 @@ export class MailerService {
 	 */
 	async sendMail(options: EmailOptions): Promise<void> {
 		const mailOptions: SendMailOptions = {
-			from: options.from || this.config.from,
+			from: options.from ?? this.config.from,
 			to: options.to,
 			subject: options.subject,
 			text: options.text,

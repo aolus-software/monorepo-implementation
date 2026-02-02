@@ -1,6 +1,7 @@
 # @repo/database
 
-Drizzle ORM database client, schema definitions, repositories, and seeding utilities for the monorepo.
+Drizzle ORM database client, schema definitions, repositories, and seeding
+utilities for the monorepo.
 
 ## Features
 
@@ -53,19 +54,19 @@ const allUsers = await db.select().from(users);
 
 // Select user by email
 const user = await db
-  .select()
-  .from(users)
-  .where(eq(users.email, "user@example.com"));
+	.select()
+	.from(users)
+	.where(eq(users.email, "user@example.com"));
 
 // Select with relations
 const usersWithRoles = await db.query.users.findMany({
-  with: {
-    user_roles: {
-      with: {
-        role: true,
-      },
-    },
-  },
+	with: {
+		user_roles: {
+			with: {
+				role: true,
+			},
+		},
+	},
 });
 ```
 
@@ -74,37 +75,29 @@ const usersWithRoles = await db.query.users.findMany({
 ```typescript
 // Insert a single user
 const [newUser] = await db
-  .insert(users)
-  .values({
-    name: "John Doe",
-    email: "john@example.com",
-    password: "hashed_password",
-    status: "active",
-  })
-  .returning();
+	.insert(users)
+	.values({
+		name: "John Doe",
+		email: "john@example.com",
+		password: "hashed_password",
+		status: "active",
+	})
+	.returning();
 
 // Insert multiple records
-await db.insert(roles).values([
-  { name: "admin" },
-  { name: "user" },
-]);
+await db.insert(roles).values([{ name: "admin" }, { name: "user" }]);
 ```
 
 ### Updating Data
 
 ```typescript
-await db
-  .update(users)
-  .set({ status: "inactive" })
-  .where(eq(users.id, userId));
+await db.update(users).set({ status: "inactive" }).where(eq(users.id, userId));
 ```
 
 ### Deleting Data
 
 ```typescript
-await db
-  .delete(users)
-  .where(eq(users.id, userId));
+await db.delete(users).where(eq(users.id, userId));
 ```
 
 ## Migrations
@@ -169,6 +162,7 @@ make db-reset
 ### Default Seed Data
 
 **Users:**
+
 - `superadmin@example.com` (super_admin role)
 - `admin@example.com` (admin role)
 - `user@example.com` (user role)
@@ -179,7 +173,9 @@ Default password for all: `password123`
 
 ### Creating Custom Seeders
 
-See [Seed README](./src/seed/README.md) and [example.seed.ts](./src/seed/example.seed.ts) for detailed documentation on creating custom seeders.
+See [Seed README](./src/seed/README.md) and
+[example.seed.ts](./src/seed/example.seed.ts) for detailed documentation on
+creating custom seeders.
 
 Quick example:
 
@@ -190,14 +186,14 @@ import type { schema } from "../schema";
 import { products } from "../schema";
 
 export async function seedProducts(db: NodePgDatabase<typeof schema>) {
-  console.log("  → Seeding products...");
-  
-  await db.insert(products).values([
-    { name: "Product 1", price: 99.99 },
-    { name: "Product 2", price: 149.99 },
-  ]);
-  
-  console.log("  ✓ Products seeded");
+	console.log("  → Seeding products...");
+
+	await db.insert(products).values([
+		{ name: "Product 1", price: 99.99 },
+		{ name: "Product 2", price: 149.99 },
+	]);
+
+	console.log("  ✓ Products seeded");
 }
 ```
 
@@ -307,6 +303,7 @@ postgresql://username:password@host:port/database
 ```
 
 For local PostgreSQL:
+
 ```
 postgresql://postgres:postgres@localhost:5432/mydb
 ```
@@ -337,4 +334,7 @@ When adding new tables:
 5. Run migration: `bun run db:migrate`
 6. Create seeder if needed
 7. Update documentation
-````
+
+```
+
+```

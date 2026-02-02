@@ -1,36 +1,35 @@
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NumberUtils {
-	static abbreviate(number: number, decimals: number = 2): string {
+	static abbreviate(number: number, decimals = 2): string {
 		const sizes = ["", "K", "M", "B", "T"];
 		let i = 0;
 		while (number >= 1000 && i < sizes.length - 1) {
 			number /= 1000;
 			i++;
 		}
-		return number.toFixed(decimals) + sizes[i];
+		return number.toFixed(decimals) + (sizes[i] ?? "");
 	}
 
 	static clamp(value: number, min: number, max: number): number {
 		return Math.min(Math.max(value, min), max);
 	}
 
-	static currency(
-		amount: number,
-		currencySymbol: string = "$",
-		decimals: number = 2,
-	): string {
+	static currency(amount: number, currencySymbol = "$", decimals = 2): string {
 		return `${currencySymbol}${amount.toFixed(decimals)}`;
 	}
 
-	static defaultCurrency: string = "$";
+	static defaultCurrency = "$";
 
-	static defaultLocale: string = "en-US";
+	static defaultLocale = "en-US";
 
-	static fileSize(bytes: number, decimals: number = 2): string {
+	static fileSize(bytes: number, decimals = 2): string {
 		const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
 		if (bytes === 0) return "0 Bytes";
 		const i = Math.floor(Math.log(bytes) / Math.log(1024));
 		return (
-			parseFloat((bytes / Math.pow(1024, i)).toFixed(decimals)) + " " + sizes[i]
+			parseFloat((bytes / Math.pow(1024, i)).toFixed(decimals)).toString() +
+			" " +
+			(sizes[i] ?? "")
 		);
 	}
 
@@ -40,7 +39,7 @@ export class NumberUtils {
 
 	static format(
 		number: number,
-		decimals: number = 2,
+		decimals = 2,
 		locale: string = NumberUtils.defaultLocale,
 	): string {
 		return number.toLocaleString(locale, {
@@ -65,7 +64,7 @@ export class NumberUtils {
 	// 	return result;
 	// }
 
-	static percentage(part: number, whole: number, decimals: number = 2): string {
+	static percentage(part: number, whole: number, decimals = 2): string {
 		return ((part / whole) * 100).toFixed(decimals) + "%";
 	}
 
@@ -76,7 +75,7 @@ export class NumberUtils {
 		return spellOut.format(number);
 	}
 
-	static trim(number: number, decimals: number = 2): number {
+	static trim(number: number, decimals = 2): number {
 		const factor = Math.pow(10, decimals);
 		return Math.floor(number * factor) / factor;
 	}
@@ -96,7 +95,7 @@ export class NumberUtils {
 	static withCurrency(
 		amount: number,
 		currencySymbol: string = NumberUtils.defaultCurrency,
-		decimals: number = 2,
+		decimals = 2,
 	): string {
 		return NumberUtils.currency(amount, currencySymbol, decimals);
 	}

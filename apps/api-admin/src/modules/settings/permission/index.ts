@@ -1,11 +1,11 @@
-import Elysia, { t } from "elysia";
-import { baseAuthApp } from "../../../base-auth";
 import {
 	CommonResponseSchemas,
 	ResponseUtils,
 	SuccessResponseSchema,
 } from "@repo/elysia";
-import { PermissionService } from "./service";
+import Elysia, { t } from "elysia";
+
+import { baseAuthApp } from "../../../base-auth";
 import {
 	CreateBulkPermissionSchema,
 	CreatePermissionSchema,
@@ -15,6 +15,7 @@ import {
 	PermissionResponseSchema,
 	UpdatePermissionSchema,
 } from "./schema";
+import { PermissionService } from "./service";
 
 export const PermissionModule = new Elysia({
 	prefix: "/permissions",
@@ -32,21 +33,24 @@ export const PermissionModule = new Elysia({
 		"/",
 		async ({ query, set }) => {
 			const queryParam = {
-				page: query.page || 1,
-				perPage: query.perPage || 10,
+				page: query.page ?? 1,
+				perPage: query.perPage ?? 10,
 				search: query.search,
-				sort: query.sort || "created_at",
-				sortDirection: query.sortDirection || "desc",
+				sort: query.sort ?? "created_at",
+				sortDirection: query.sortDirection ?? "desc",
 				filter: {
 					group: query["filter[group]"],
 					name: query["filter[name]"],
 				},
 			};
 
-			const result = await PermissionService.findAll(queryParam as any);
+			const result = await PermissionService.findAll(queryParam);
 
 			set.status = 200;
-			return ResponseUtils.success(result, "Permissions retrieved successfully");
+			return ResponseUtils.success(
+				result,
+				"Permissions retrieved successfully",
+			);
 		},
 		{
 			query: PermissionDatatableQuerySchema,
@@ -209,66 +213,6 @@ export const PermissionModule = new Elysia({
 			detail: {
 				summary: "Delete permission",
 				description: "Delete a permission",
-			},
-		},
-	)
-
-	// ============================================
-	// GET SELECT OPTIONS
-	// ============================================
-	.get(
-		"/select/options",
-		async ({ set }) => {
-			const options = await PermissionService.selectOptions();
-
-			set.status = 200;
-			return ResponseUtils.success(
-				options,
-				"Permission options retrieved successfully",
-			);
-		},
-		{
-			response: {
-				200: SuccessResponseSchema(
-					t.Array(
-						t.Object({
-							value: t.String(),
-							label: t.String(),
-							group: t.String(),
-						}),
-					),
-				),
-				401: CommonResponseSchemas[401],
-			},
-			detail: {
-				summary: "Get permission select options",
-				description: "Get all permissions formatted for select dropdowns",
-			},
-		},
-	)
-
-	// ============================================
-	// GET GROUPED PERMISSIONS
-	// ============================================
-	.get(
-		"/grouped/all",
-		async ({ set }) => {
-			const grouped = await PermissionService.getAllGrouped();
-
-			set.status = 200;
-			return ResponseUtils.success(
-				grouped,
-				"Grouped permissions retrieved successfully",
-			);
-		},
-		{
-			response: {
-				200: SuccessResponseSchema(t.Any()),
-				401: CommonResponseSchemas[401],
-			},
-			detail: {
-				summary: "Get permissions grouped by group",
-				description: "Get all permissions organized by their group",
 			},
 		},
 	);

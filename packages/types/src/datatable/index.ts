@@ -1,3 +1,3 @@
-export * from "./datatable";
-export * from "./pagination";
-export * from "./sort-direction";
+export type * from "./datatable";
+export type * from "./pagination";
+export type * from "./sort-direction";

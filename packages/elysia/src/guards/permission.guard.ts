@@ -1,12 +1,13 @@
-import { UserInformation } from "@repo/types";
+import type { UserInformation } from "@repo/types";
+
 import { ForbiddenError } from "../errors";
 
 /**
  * Permission Guard Helper
- * 
+ *
  * Checks if a user has required permissions
  * Superuser role bypasses all permission checks
- * 
+ *
  * @example
  * ```ts
  * .get('/admin', ({ user }) => {
@@ -15,6 +16,7 @@ import { ForbiddenError } from "../errors";
  * })
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class PermissionGuard {
 	/**
 	 * Check if user has all required permissions
@@ -27,10 +29,10 @@ export class PermissionGuard {
 	static canActivate(
 		user: UserInformation,
 		requiredPermissions: string[],
-		superuserRole: string = "superuser",
+		superuserRole = "superuser",
 	): boolean {
-		const userPermissions = user.permissions || [];
-		
+		const userPermissions = user.permissions;
+
 		// Superuser has all permissions
 		if (user.roles.includes(superuserRole)) {
 			return true;
@@ -61,10 +63,10 @@ export class PermissionGuard {
 	static canActivateAny(
 		user: UserInformation,
 		permissions: string[],
-		superuserRole: string = "superuser",
+		superuserRole = "superuser",
 	): boolean {
-		const userPermissions = user.permissions || [];
-		
+		const userPermissions = user.permissions;
+
 		// Superuser has all permissions
 		if (user.roles.includes(superuserRole)) {
 			return true;

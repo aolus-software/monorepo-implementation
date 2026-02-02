@@ -1,11 +1,11 @@
-import Elysia, { t } from "elysia";
-import { baseAuthApp } from "../../../base-auth";
 import {
 	CommonResponseSchemas,
 	ResponseUtils,
 	SuccessResponseSchema,
 } from "@repo/elysia";
-import { UserService } from "./service";
+import Elysia, { t } from "elysia";
+
+import { baseAuthApp } from "../../../base-auth";
 import {
 	CreateUserSchema,
 	UpdateUserSchema,
@@ -13,6 +13,7 @@ import {
 	UserPaginationResponseSchema,
 	UserResponseSchema,
 } from "./schema";
+import { UserService } from "./service";
 
 export const UserModule = new Elysia({
 	prefix: "/users",
@@ -30,11 +31,11 @@ export const UserModule = new Elysia({
 		"/",
 		async ({ query, set }) => {
 			const queryParam = {
-				page: query.page || 1,
-				perPage: query.perPage || 10,
+				page: query.page ?? 1,
+				perPage: query.perPage ?? 10,
 				search: query.search,
-				sort: query.sort || "created_at",
-				sortDirection: query.sortDirection || "desc",
+				sort: query.sort ?? "created_at",
+				sortDirection: query.sortDirection ?? "desc",
 				filter: {
 					status: query["filter[status]"],
 					name: query["filter[name]"],
@@ -43,7 +44,7 @@ export const UserModule = new Elysia({
 				},
 			};
 
-			const result = await UserService.findAll(queryParam as any);
+			const result = await UserService.findAll(queryParam);
 
 			set.status = 200;
 			return ResponseUtils.success(result, "Users retrieved successfully");

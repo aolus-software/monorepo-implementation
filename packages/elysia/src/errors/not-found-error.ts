@@ -1,17 +1,11 @@
-export class NotFoundError extends Error {
-	code: number;
+import { NotFoundError as BaseNotFoundError } from "@repo/types";
 
-	/**
-	 * Represents an error when a user is not authorized to access a resource.
-	 * @param {string} message - The error message.
-	 */
-	constructor(message: string = "Resource not found") {
+export class NotFoundError extends BaseNotFoundError {
+	constructor(message = "Resource not found") {
 		super(message);
-		this.name = "NotFoundError";
-		this.code = 422;
 	}
 
-	toResponse() {
+	toResponse(): Response {
 		return Response.json(
 			{
 				status: 422,

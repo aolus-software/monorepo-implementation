@@ -1,20 +1,20 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1769164382365,
-      "tag": "0000_fluffy_kronos",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1769930560375,
-      "tag": "0001_fancy_sleepwalker",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1769164382365,
+			"tag": "0000_fluffy_kronos",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1769930560375,
+			"tag": "0001_fancy_sleepwalker",
+			"breakpoints": true
+		}
+	]
 }

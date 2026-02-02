@@ -5,18 +5,8 @@
 		"lib": ["ESNext"],
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"baseUrl": ".",
-		"composite": true,
-		"declaration": true,
-		"declarationMap": true,
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"noEmit": false,
-		"paths": {
-			"@repo/database": ["../database/src/index.ts"]
-		}
+		"baseUrl": "."
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules", "dist"],
-	"references": [{ "path": "../database" }]
+	"exclude": ["node_modules", "dist"]
 }

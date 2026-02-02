@@ -11,7 +11,7 @@ export const DocsPlugin = (
 		enable: true,
 		appName: "Elysia App",
 	},
-) => {
+): Elysia => {
 	return new Elysia({ name: "docs" }).use(
 		openapi({
 			path: "/docs",

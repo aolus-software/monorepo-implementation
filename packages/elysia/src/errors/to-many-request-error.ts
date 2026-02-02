@@ -1,9 +1,9 @@
 export class RateLimitError extends Error {
-	constructor(public message: string = "rate-limited") {
+	constructor(public message = "rate-limited") {
 		super(message);
 	}
 
-	toResponse() {
+	toResponse(): Response {
 		return Response.json(
 			{
 				status: 429,

@@ -1,20 +1,6 @@
-import {
-	and,
-	asc,
-	desc,
-	eq,
-	exists,
-	ilike,
-	isNull,
-	or,
-	SQL,
-} from "drizzle-orm";
-import { DbClient, DbTransaction } from ".";
-import { userRoles, users, UserStatusEnum } from "src/schema";
-import { HashUtils } from "../../../utils/src/security/hash";
-import {
+import { BadRequestError, NotFoundError, UnauthorizedError } from "@repo/types";
+import type {
 	DatatableType,
-	defaultSort,
 	PaginationResponse,
 	SortDirection,
 	UserCreate,
@@ -22,18 +8,21 @@ import {
 	UserForAuth,
 	UserInformation,
 	UserList,
+	UserStatusEnum,
 } from "@repo/types";
+import { defaultSort } from "@repo/types";
+import type { SQL } from "drizzle-orm";
+import { and, asc, desc, eq, exists, ilike, isNull, or } from "drizzle-orm";
 
-import {
-	BadRequestError,
-	NotFoundError,
-	UnauthorizedError,
-} from "@repo/elysia";
+import { HashUtils } from "../../../utils/src/security/hash";
+import { userRoles, users } from "../schema";
+import type { DbClient, DbTransaction } from ".";
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export const UserRepository = (dbInstance: DbClient) => {
 	return {
 		db: dbInstance,
-		getDb: (tx?: DbTransaction) => tx || (dbInstance as any).$cache,
+		getDb: (tx?: DbTransaction): DbTransaction | DbClient => tx ?? dbInstance,
 
 		findAll: async (
 			queryParam: DatatableType<{
@@ -44,16 +33,14 @@ export const UserRepository = (dbInstance: DbClient) => {
 			}>,
 			tx?: DbTransaction,
 		): Promise<PaginationResponse<UserList>> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
-			const page: number = queryParam.page || 1;
-			const limit: number = queryParam.perPage || 10;
-			const search: string | null = queryParam.search || null;
-			const orderBy: string = queryParam.sort ? queryParam.sort : defaultSort;
-			const orderDirection: SortDirection = queryParam.sortDirection
-				? queryParam.sortDirection
-				: "desc";
-			const filter = queryParam.filter || null;
+			const page = queryParam.page;
+			const limit = queryParam.perPage;
+			const search = queryParam.search ?? null;
+			const orderBy = queryParam.sort ?? defaultSort;
+			const orderDirection: SortDirection = queryParam.sortDirection;
+			const filter = queryParam.filter ?? null;
 			const offset = (page - 1) * limit;
 
 			let whereCondition: SQL | undefined = isNull(users.deleted_at);
@@ -80,14 +67,14 @@ export const UserRepository = (dbInstance: DbClient) => {
 				if (filter.name) {
 					filteredCondition = and(
 						whereCondition,
-						ilike(users.name, `%${filter.name.toString()}%`),
+						ilike(users.name, `%${filter.name}%`),
 					);
 				}
 
 				if (filter.email) {
 					filteredCondition = and(
 						whereCondition,
-						ilike(users.email, `%${filter.email.toString()}%`),
+						ilike(users.email, `%${filter.email}%`),
 					);
 				}
 
@@ -101,7 +88,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 								.where(
 									and(
 										eq(userRoles.user_id, users.id),
-										eq(userRoles.role_id, filter.role_id as string),
+										eq(userRoles.role_id, filter.role_id),
 									),
 								),
 						),
@@ -111,7 +98,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 
 			const finalWhereCondition: SQL | undefined = and(
 				whereCondition,
-				filteredCondition ? filteredCondition : undefined,
+				filteredCondition ?? undefined,
 			);
 
 			const validateOrderBy = {
@@ -193,7 +180,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 			data: UserCreate,
 			tx?: DbTransaction,
 		): Promise<UserDetail> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// validate is the email exist
 			const isEmailExist = await database
@@ -218,8 +205,8 @@ export const UserRepository = (dbInstance: DbClient) => {
 					name: data.name,
 					email: data.email,
 					password: hashedPassword,
-					status: data.status || "active",
-					remark: data.remark || null,
+					status: data.status ?? "active",
+					remark: data.remark ?? null,
 				})
 				.returning();
 
@@ -232,7 +219,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 				]);
 			}
 
-			let userId = user.id;
+			const userId = user.id;
 			if (data.role_ids && data.role_ids.length > 0) {
 				const userRolesData: {
 					user_id: string;
@@ -302,7 +289,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 			userId: string,
 			tx?: DbTransaction,
 		): Promise<UserDetail> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 			const user = await database.query.users.findFirst({
 				where: and(eq(users.id, userId), isNull(users.deleted_at)),
 
@@ -359,7 +346,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 			data: Omit<UserCreate, "password">,
 			tx?: DbTransaction,
 		): Promise<void> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 			const user = await database.query.users.findFirst({
 				where: and(eq(users.id, userId), isNull(users.deleted_at)),
 			});
@@ -373,8 +360,8 @@ export const UserRepository = (dbInstance: DbClient) => {
 				.set({
 					name: data.name,
 					email: data.email,
-					status: data.status || user.status,
-					remark: data.remark || user.remark,
+					status: data.status ?? user.status,
+					remark: data.remark ?? user.remark,
 				})
 				.where(eq(users.id, userId));
 
@@ -396,7 +383,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 		},
 
 		delete: async (userId: string, tx?: DbTransaction): Promise<void> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 			const user = await database.query.users.findFirst({
 				where: and(eq(users.id, userId), isNull(users.deleted_at)),
 			});
@@ -415,7 +402,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 			userId: string,
 			tx?: DbTransaction,
 		): Promise<UserInformation> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 			const user = await database.query.users.findFirst({
 				where: and(
 					eq(users.id, userId),
@@ -486,7 +473,7 @@ export const UserRepository = (dbInstance: DbClient) => {
 			email: string,
 			tx?: DbTransaction,
 		): Promise<UserForAuth> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 			const user = await database.query.users.findFirst({
 				where: and(eq(users.email, email), isNull(users.deleted_at)),
 				columns: {

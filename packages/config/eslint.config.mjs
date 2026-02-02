@@ -144,3 +144,5 @@ export const baseConfig = tseslint.config(
 		},
 	},
 );
+
+export default baseConfig;

@@ -65,12 +65,10 @@ export const HelmetDefaultOptions = defaultOptions.helmetOptions;
 
 export const SecurityPlugin = (
 	options: SecurityPluginsOptions = defaultOptions,
-) => {
-	if (!options.corsOptions) options.corsOptions = defaultOptions.corsOptions;
-	if (!options.rateLimitOptions)
-		options.rateLimitOptions = defaultOptions.rateLimitOptions;
-	if (!options.helmetOptions)
-		options.helmetOptions = defaultOptions.helmetOptions;
+): Elysia => {
+	options.corsOptions ??= defaultOptions.corsOptions;
+	options.rateLimitOptions ??= defaultOptions.rateLimitOptions;
+	options.helmetOptions ??= defaultOptions.helmetOptions;
 
 	return new Elysia({ name: "security" })
 		.use(cors(options.corsOptions))

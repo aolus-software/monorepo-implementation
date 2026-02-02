@@ -1,5 +1,5 @@
 import { RoleRepository } from "@repo/database";
-import {
+import type {
 	DatatableType,
 	PaginationResponse,
 	RoleCreate,
@@ -7,6 +7,7 @@ import {
 	RoleList,
 	RoleWithPermissions,
 } from "@repo/types";
+
 import { db } from "../../../db";
 
 const roleRepo = RoleRepository(db);
@@ -83,12 +84,5 @@ export const RoleService = {
 		permissionIds: string[],
 	): Promise<void> => {
 		await roleRepo.assignPermissions(roleId, permissionIds);
-	},
-
-	/**
-	 * Get all roles as select options
-	 */
-	selectOptions: async () => {
-		return await roleRepo.selectOptions();
 	},
 };

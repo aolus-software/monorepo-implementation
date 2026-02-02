@@ -1,22 +1,22 @@
-import { and, asc, desc, eq, ilike, or, SQL } from "drizzle-orm";
-import { DbClient, DbTransaction } from ".";
-import { permissions } from "../schema";
-import {
-	BadRequestError,
-	NotFoundError,
-} from "@repo/elysia";
-import {
+import type {
 	DatatableType,
 	PaginationResponse,
 	PermissionCreate,
 	PermissionDetail,
 	PermissionList,
 } from "@repo/types";
+import { BadRequestError, NotFoundError } from "@repo/types";
+import type { SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or } from "drizzle-orm";
 
+import { permissions } from "../schema";
+import type { DbClient, DbTransaction } from ".";
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export const PermissionRepository = (dbInstance: DbClient) => {
 	return {
 		db: dbInstance,
-		getDb: (tx?: DbTransaction) => tx || (dbInstance as any).$cache,
+		getDb: (tx?: DbTransaction): DbClient | DbTransaction => tx ?? dbInstance,
 
 		/**
 		 * Get all permissions with pagination and filtering
@@ -28,10 +28,10 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			}>,
 			tx?: DbTransaction,
 		): Promise<PaginationResponse<PermissionList>> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
-			const page: number = queryParam.page || 1;
-			const limit: number = queryParam.perPage || 10;
+			const page = queryParam.page;
+			const limit = queryParam.perPage;
 			const offset: number = (page - 1) * limit;
 
 			// Build WHERE conditions
@@ -51,23 +51,20 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 
 			// Global search
 			if (queryParam.search) {
-				conditions.push(
-					or(
-						ilike(permissions.name, `%${queryParam.search}%`),
-						ilike(permissions.group, `%${queryParam.search}%`),
-					)!,
+				const searchCondition = or(
+					ilike(permissions.name, `%${queryParam.search}%`),
+					ilike(permissions.group, `%${queryParam.search}%`),
 				);
+				if (searchCondition) {
+					conditions.push(searchCondition);
+				}
 			}
 
-			const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+			const whereClause =
+				conditions.length > 0 ? and(...conditions) : undefined;
 
 			// Determine sort direction
-			const sortDirection =
-				queryParam.sortDirection === "asc"
-					? asc
-					: queryParam.sortDirection === "desc"
-						? desc
-						: asc;
+			const sortDirection = queryParam.sortDirection === "asc" ? asc : desc;
 
 			// Determine sort field
 			let sortField = permissions.created_at;
@@ -116,7 +113,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			id: string,
 			tx?: DbTransaction,
 		): Promise<PermissionDetail | null> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			const permission = await database.query.permissions.findFirst({
 				where: eq(permissions.id, id),
@@ -142,7 +139,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			data: PermissionCreate,
 			tx?: DbTransaction,
 		): Promise<PermissionDetail> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Check if permission already exists
 			const existing = await database.query.permissions.findFirst({
@@ -150,9 +147,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			});
 
 			if (existing) {
-				throw new BadRequestError(
-					`Permission '${data.name}' already exists`,
-				);
+				throw new BadRequestError(`Permission '${data.name}' already exists`);
 			}
 
 			const [permission] = await database
@@ -181,7 +176,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			names: string[],
 			tx?: DbTransaction,
 		): Promise<PermissionDetail[]> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Prepare data with format group:name
 			const permissionsData = names.map((name) => ({
@@ -191,9 +186,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 
 			// Check for existing permissions
 			const existingPermissions = await database.query.permissions.findMany({
-				where: or(
-					...permissionsData.map((p) => eq(permissions.name, p.name)),
-				),
+				where: or(...permissionsData.map((p) => eq(permissions.name, p.name))),
 			});
 
 			if (existingPermissions.length > 0) {
@@ -226,7 +219,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			data: Partial<PermissionCreate>,
 			tx?: DbTransaction,
 		): Promise<PermissionDetail> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Check if permission exists
 			const existing = await database.query.permissions.findFirst({
@@ -244,9 +237,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 				});
 
 				if (duplicate) {
-					throw new BadRequestError(
-						`Permission '${data.name}' already exists`,
-					);
+					throw new BadRequestError(`Permission '${data.name}' already exists`);
 				}
 			}
 
@@ -273,7 +264,7 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 		 * Delete permission
 		 */
 		delete: async (id: string, tx?: DbTransaction): Promise<void> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			const existing = await database.query.permissions.findFirst({
 				where: eq(permissions.id, id),
@@ -289,8 +280,10 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 		/**
 		 * Get all permissions as select options
 		 */
-		selectOptions: async (tx?: DbTransaction) => {
-			const database = tx || dbInstance;
+		selectOptions: async (
+			tx?: DbTransaction,
+		): Promise<{ value: string; label: string; group: string }[]> => {
+			const database = tx ?? dbInstance;
 
 			const data = await database.query.permissions.findMany({
 				orderBy: [asc(permissions.group), asc(permissions.name)],
@@ -312,22 +305,20 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 		 * Get all permissions grouped by group
 		 */
 		getAllGrouped: async (tx?: DbTransaction) => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			const data = await database.query.permissions.findMany({
 				orderBy: [asc(permissions.group), asc(permissions.name)],
 			});
 
 			// Group by group
-			const grouped = data.reduce(
+			const grouped = data.reduce<Record<string, typeof data>>(
 				(acc, permission) => {
-					if (!acc[permission.group]) {
-						acc[permission.group] = [];
-					}
+					acc[permission.group] ??= [];
 					acc[permission.group].push(permission);
 					return acc;
 				},
-				{} as Record<string, typeof data>,
+				{},
 			);
 
 			return grouped;

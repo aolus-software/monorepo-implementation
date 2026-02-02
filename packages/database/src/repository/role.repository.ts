@@ -1,11 +1,4 @@
-import { and, asc, desc, eq, ilike, or, SQL, inArray } from "drizzle-orm";
-import { DbClient, DbTransaction } from ".";
-import { roles, rolePermissions, permissions } from "../schema";
-import {
-	BadRequestError,
-	NotFoundError,
-} from "@repo/elysia";
-import {
+import type {
 	DatatableType,
 	PaginationResponse,
 	RoleCreate,
@@ -13,11 +6,18 @@ import {
 	RoleList,
 	RoleWithPermissions,
 } from "@repo/types";
+import { BadRequestError, NotFoundError } from "@repo/types";
+import type { SQL } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray } from "drizzle-orm";
 
+import { permissions, rolePermissions, roles } from "../schema";
+import type { DbClient, DbTransaction } from ".";
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export const RoleRepository = (dbInstance: DbClient) => {
 	return {
 		db: dbInstance,
-		getDb: (tx?: DbTransaction) => tx || (dbInstance as any).$cache,
+		getDb: (tx?: DbTransaction): DbClient | DbTransaction => tx ?? dbInstance,
 
 		/**
 		 * Get all roles with pagination and filtering
@@ -28,10 +28,10 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			}>,
 			tx?: DbTransaction,
 		): Promise<PaginationResponse<RoleList>> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
-			const page: number = queryParam.page || 1;
-			const limit: number = queryParam.perPage || 10;
+			const page = queryParam.page;
+			const limit = queryParam.perPage;
 			const offset: number = (page - 1) * limit;
 
 			// Build WHERE conditions
@@ -47,15 +47,11 @@ export const RoleRepository = (dbInstance: DbClient) => {
 				conditions.push(ilike(roles.name, `%${queryParam.search}%`));
 			}
 
-			const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+			const whereClause =
+				conditions.length > 0 ? and(...conditions) : undefined;
 
 			// Determine sort direction
-			const sortDirection =
-				queryParam.sortDirection === "asc"
-					? asc
-					: queryParam.sortDirection === "desc"
-						? desc
-						: asc;
+			const sortDirection = queryParam.sortDirection === "asc" ? asc : desc;
 
 			// Determine sort field
 			let sortField = roles.created_at;
@@ -109,7 +105,7 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			id: string,
 			tx?: DbTransaction,
 		): Promise<RoleDetail | null> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			const role = await database.query.roles.findFirst({
 				where: eq(roles.id, id),
@@ -147,7 +143,7 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			id: string,
 			tx?: DbTransaction,
 		): Promise<RoleWithPermissions | null> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Get role with its permissions
 			const role = await database.query.roles.findFirst({
@@ -199,7 +195,7 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			data: RoleCreate,
 			tx?: DbTransaction,
 		): Promise<RoleDetail> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Check if role already exists
 			const existing = await database.query.roles.findFirst({
@@ -229,8 +225,13 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			}
 
 			// Fetch the created role with permissions
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 			const createdRole = await this.findById(role.id, database);
-			return createdRole!;
+			if (!createdRole) {
+				throw new NotFoundError("Failed to retrieve created role");
+			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return createdRole;
 		},
 
 		/**
@@ -241,7 +242,7 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			data: Partial<RoleCreate>,
 			tx?: DbTransaction,
 		): Promise<RoleDetail> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Check if role exists
 			const existing = await database.query.roles.findFirst({
@@ -293,15 +294,20 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			}
 
 			// Fetch the updated role with permissions
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 			const updatedRole = await this.findById(id, database);
-			return updatedRole!;
+			if (!updatedRole) {
+				throw new NotFoundError("Failed to retrieve updated role");
+			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return updatedRole;
 		},
 
 		/**
 		 * Delete role
 		 */
 		delete: async (id: string, tx?: DbTransaction): Promise<void> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			const existing = await database.query.roles.findFirst({
 				where: eq(roles.id, id),
@@ -323,7 +329,7 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			permissionIds: string[],
 			tx?: DbTransaction,
 		): Promise<void> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Verify role exists
 			const role = await database.query.roles.findFirst({
@@ -362,8 +368,10 @@ export const RoleRepository = (dbInstance: DbClient) => {
 		/**
 		 * Get all roles as select options
 		 */
-		selectOptions: async (tx?: DbTransaction) => {
-			const database = tx || dbInstance;
+		selectOptions: async (
+			tx?: DbTransaction,
+		): Promise<{ value: string; label: string }[]> => {
+			const database = tx ?? dbInstance;
 
 			const data = await database.query.roles.findMany({
 				orderBy: [asc(roles.name)],

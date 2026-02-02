@@ -1,5 +1,5 @@
-import { mailer } from "../mailer";
 import { env } from "../env";
+import { mailer } from "../mailer";
 
 /**
  * Email templates and sending logic for the Admin API

@@ -1,5 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StrUtils {
-	static random(length: number = 16): string {
+	static random(length = 16): string {
 		const characters =
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 		return Array.from({ length }, () =>
@@ -75,8 +76,8 @@ export class StrUtils {
 	static excerpt(
 		subject: string,
 		phrase: string,
-		radius: number = 50,
-		end: string = "...",
+		radius = 50,
+		end = "...",
 	): string {
 		const position = subject.indexOf(phrase);
 		if (position === -1) return "";
@@ -157,7 +158,7 @@ export class StrUtils {
 		return subject.length;
 	}
 
-	static limit(subject: string, limit: number, end: string = "..."): string {
+	static limit(subject: string, limit: number, end = "..."): string {
 		return subject.length > limit ? subject.substring(0, limit) + end : subject;
 	}
 
@@ -168,7 +169,7 @@ export class StrUtils {
 	static mask(
 		subject: string,
 		mask: string,
-		start: number = 0,
+		start = 0,
 		length?: number,
 	): string {
 		const end = typeof length === "undefined" ? subject.length : start + length;
@@ -179,19 +180,19 @@ export class StrUtils {
 		);
 	}
 
-	static padBoth(subject: string, length: number, pad: string = " "): string {
+	static padBoth(subject: string, length: number, pad = " "): string {
 		const totalPad = Math.max(0, length - subject.length);
 		const leftPad = Math.floor(totalPad / 2);
 		const rightPad = totalPad - leftPad;
 		return pad.repeat(leftPad) + subject + pad.repeat(rightPad);
 	}
 
-	static padLeft(subject: string, length: number, pad: string = " "): string {
+	static padLeft(subject: string, length: number, pad = " "): string {
 		const totalPad = Math.max(0, length - subject.length);
 		return pad.repeat(totalPad) + subject;
 	}
 
-	static padRight(subject: string, length: number, pad: string = " "): string {
+	static padRight(subject: string, length: number, pad = " "): string {
 		const totalPad = Math.max(0, length - subject.length);
 		return subject + pad.repeat(totalPad);
 	}
@@ -204,7 +205,7 @@ export class StrUtils {
 		return subject.endsWith("s") ? subject.slice(0, -1) : subject;
 	}
 
-	static slug(subject: string, separator: string = "-"): string {
+	static slug(subject: string, separator = "-"): string {
 		return subject
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, separator)
@@ -244,7 +245,7 @@ export class StrUtils {
 	}
 
 	static substrCount(subject: string, search: string): number {
-		return (subject.match(new RegExp(search, "g")) || []).length;
+		return (subject.match(new RegExp(search, "g")) ?? []).length;
 	}
 
 	static substrReplace(
@@ -327,18 +328,14 @@ export class StrUtils {
 		return subject.trim().split(/\s+/).length;
 	}
 
-	static wordWrap(
-		subject: string,
-		width: number,
-		breakStr: string = "\n",
-	): string {
+	static wordWrap(subject: string, width: number, breakStr = "\n"): string {
 		return subject.replace(
 			new RegExp(`(.{1,${width}})(\\s+|$)`, "g"),
 			`$1${breakStr}`,
 		);
 	}
 
-	static words(subject: string, words: number, end: string = "..."): string {
+	static words(subject: string, words: number, end = "..."): string {
 		const wordArray = subject.trim().split(/\s+/);
 		return wordArray.length > words
 			? wordArray.slice(0, words).join(" ") + end

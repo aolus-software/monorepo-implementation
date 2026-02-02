@@ -20,17 +20,6 @@ export const userStatusEnum = pgEnum("user_status", [
 	"blocked",
 ]);
 
-// Export enum object for Typebox
-export const UserStatus = {
-	ACTIVE: "active",
-	INACTIVE: "inactive",
-	SUSPENDED: "suspended",
-	BLOCKED: "blocked",
-} as const;
-
-// Export type
-export type UserStatusEnum = (typeof UserStatus)[keyof typeof UserStatus];
-
 export const users = pgTable(
 	"users",
 	{

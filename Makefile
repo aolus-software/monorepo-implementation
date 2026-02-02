@@ -40,6 +40,10 @@ help:
 	@echo "Other:"
 	@echo "  make start          - Start the application"
 	@echo "  make install        - Install dependencies"
+	@echo "  make rebuild        - Clean and rebuild all"
+	@echo "  make fresh          - Clean, install dependencies, and build all"
+	@echo "  make deploy-prep    - Prepare the project for deployment (install, migrate, build)"
+	@echo ""
 
 # Development
 dev:
@@ -60,6 +64,7 @@ build:
 	@bun run build --filter="@repo/env"
 	@bun run build --filter="@repo/elysia"
 	@bun run build --filter="@repo/database"
+	@bun run build --filter="@repo/mailer"
 	@bun run build --filter="@repo/ui"
 	@echo "🔨 Building apps..."
 	@bun run build --filter="@repo/api-*"
@@ -74,6 +79,7 @@ build-packages:
 	@bun run build --filter="@repo/env"
 	@bun run build --filter="@repo/elysia"
 	@bun run build --filter="@repo/database"
+	@bun run build --filter="@repo/mailer"
 	@bun run build --filter="@repo/ui"
 	@echo "✅ Packages built!"
 
@@ -175,3 +181,11 @@ rebuild: clean-build
 
 fresh: clean-all install build
 	@echo "✨ Fresh installation and build complete!"
+
+# deploy
+deploy-prep:
+	@echo "🚀 Preparing for deployment..."
+	@$(MAKE) install
+	@$(MAKE) db-migrate
+	@$(MAKE) build
+	@echo "✅ Deployment preparation complete!"

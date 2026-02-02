@@ -1,16 +1,19 @@
-import {
+import type {
 	ErrorResponse,
 	PaginatedResponse,
 	SuccessResponse,
 	ValidationErrorResponse,
 } from "@repo/types/src/index.ts";
-import { t, TSchema } from "elysia";
+import type { TSchema } from "elysia";
+import { t } from "elysia";
 
 // ============================================
 // RESPONSE TYPE DEFINITIONS
 // ============================================
 
-export const SuccessResponseSchema = <T extends TSchema>(dataSchema: T) =>
+export const SuccessResponseSchema = (
+	dataSchema: TSchema,
+): ReturnType<typeof t.Object> =>
 	t.Object({
 		status: t.Number(),
 		success: t.Literal(true),
@@ -49,7 +52,9 @@ export const ValidationErrorResponseSchema = t.Object({
 	),
 });
 
-export const PaginatedResponseSchema = <T extends TSchema>(itemSchema: T) =>
+export const PaginatedResponseSchema = (
+	itemSchema: TSchema,
+): ReturnType<typeof t.Object> =>
 	t.Object({
 		status: t.Number(),
 		success: t.Literal(true),
@@ -68,6 +73,7 @@ export const PaginatedResponseSchema = <T extends TSchema>(itemSchema: T) =>
 // RESPONSE TOOLKIT
 // ============================================
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ResponseUtils {
 	/**
 	 * Create a success response
@@ -77,8 +83,8 @@ export class ResponseUtils {
 	 */
 	static success<T>(
 		data: T,
-		message: string = "Success",
-		status: number = 200,
+		message = "Success",
+		status = 200,
 	): SuccessResponse<T> {
 		return {
 			status,
@@ -102,8 +108,8 @@ export class ResponseUtils {
 			limit: number;
 			totalCount: number;
 		},
-		message: string = "Data retrieved successfully",
-		status: number = 200,
+		message = "Data retrieved successfully",
+		status = 200,
 	): PaginatedResponse<T> {
 		return {
 			status,
@@ -121,7 +127,7 @@ export class ResponseUtils {
 	 * @param message - Error message
 	 * @param status - HTTP status code (default: 400)
 	 */
-	static error(message: string, status: number = 400): ErrorResponse {
+	static error(message: string, status = 400): ErrorResponse {
 		return {
 			status,
 			success: false,
@@ -137,9 +143,9 @@ export class ResponseUtils {
 	 * @param status - HTTP status code (default: 422)
 	 */
 	static validationError(
-		errors: Array<{ field: string; message: string }>,
-		message: string = "Validation failed",
-		status: number = 422,
+		errors: { field: string; message: string }[],
+		message = "Validation failed",
+		status = 422,
 	): ValidationErrorResponse {
 		return {
 			status,
@@ -153,7 +159,7 @@ export class ResponseUtils {
 	 * Create a not found response
 	 * @param message - Error message (default: "Resource not found")
 	 */
-	static notFound(message: string = "Resource not found"): ErrorResponse {
+	static notFound(message = "Resource not found"): ErrorResponse {
 		return this.error(message, 404);
 	}
 
@@ -161,7 +167,7 @@ export class ResponseUtils {
 	 * Create an unauthorized response
 	 * @param message - Error message (default: "Unauthorized")
 	 */
-	static unauthorized(message: string = "Unauthorized"): ErrorResponse {
+	static unauthorized(message = "Unauthorized"): ErrorResponse {
 		return this.error(message, 401);
 	}
 
@@ -169,7 +175,7 @@ export class ResponseUtils {
 	 * Create a forbidden response
 	 * @param message - Error message (default: "Forbidden")
 	 */
-	static forbidden(message: string = "Forbidden"): ErrorResponse {
+	static forbidden(message = "Forbidden"): ErrorResponse {
 		return this.error(message, 403);
 	}
 
@@ -185,7 +191,7 @@ export class ResponseUtils {
 	 * Create a too many requests response
 	 * @param message - Error message (default: "Too many requests")
 	 */
-	static tooManyRequests(message: string = "Too many requests"): ErrorResponse {
+	static tooManyRequests(message = "Too many requests"): ErrorResponse {
 		return this.error(message, 429);
 	}
 
@@ -193,9 +199,7 @@ export class ResponseUtils {
 	 * Create an internal server error response
 	 * @param message - Error message (default: "Internal server error")
 	 */
-	static internalError(
-		message: string = "Internal server error",
-	): ErrorResponse {
+	static internalError(message = "Internal server error"): ErrorResponse {
 		return this.error(message, 500);
 	}
 
@@ -206,7 +210,7 @@ export class ResponseUtils {
 	 */
 	static created<T>(
 		data: T,
-		message: string = "Resource created successfully",
+		message = "Resource created successfully",
 	): SuccessResponse<T> {
 		return this.success(data, message, 201);
 	}
@@ -225,7 +229,7 @@ export class ResponseUtils {
 	 */
 	static accepted<T>(
 		data: T,
-		message: string = "Request accepted for processing",
+		message = "Request accepted for processing",
 	): SuccessResponse<T> {
 		return this.success(data, message, 202);
 	}
@@ -290,7 +294,9 @@ export const CommonResponseSchemas = {
 };
 
 // Helper to create response schema with specific data type
-export const createResponseSchema = <T extends TSchema>(dataSchema: T) => ({
+export const createResponseSchema = (
+	dataSchema: TSchema,
+): ReturnType<typeof t.Object> => ({
 	200: SuccessResponseSchema(dataSchema),
 	400: ErrorResponseSchema,
 	401: CommonResponseSchemas[401],
@@ -300,9 +306,9 @@ export const createResponseSchema = <T extends TSchema>(dataSchema: T) => ({
 });
 
 // Helper to create paginated response schema
-export const createPaginatedResponseSchema = <T extends TSchema>(
-	itemSchema: T,
-) => ({
+export const createPaginatedResponseSchema = (
+	itemSchema: TSchema,
+): ReturnType<typeof t.Object> => ({
 	200: PaginatedResponseSchema(itemSchema),
 	400: ErrorResponseSchema,
 	401: CommonResponseSchemas[401],

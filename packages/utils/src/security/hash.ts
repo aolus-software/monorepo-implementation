@@ -1,5 +1,6 @@
 import * as bcrypt from "bcryptjs";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class HashUtils {
 	static async generateHash(value: string): Promise<string> {
 		const saltRounds = 10;

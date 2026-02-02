@@ -1,14 +1,15 @@
+import type { DbTransaction } from "@repo/database";
 import {
+	emailVerifications,
+	eq,
+	passwordResetTokens,
 	UserRepository,
 	users,
-	emailVerifications,
-	passwordResetTokens,
-	eq,
-	DbTransaction,
 } from "@repo/database";
 import { BadRequestError, log } from "@repo/elysia";
-import { UserInformation } from "@repo/types";
+import type { UserInformation } from "@repo/types";
 import { HashUtils, TokenUtils } from "@repo/utils";
+
 import { db } from "../../db";
 import { EmailService } from "../../services/email.service";
 
@@ -71,16 +72,6 @@ export const AuthService = {
 	singIn: async (email: string, password: string): Promise<UserInformation> => {
 		try {
 			const user = await UserRepository(db).findByEmail(email);
-
-			if (!user) {
-				throw new BadRequestError("Validation error", [
-					{
-						field: "email",
-						message: "Invalid email or password",
-					},
-				]);
-			}
-
 			if (user.email_verified_at === null) {
 				throw new BadRequestError("Validation error", [
 					{
@@ -166,7 +157,12 @@ export const AuthService = {
 				);
 
 				// Send verification email
-				await sendVerificationEmail(newUser.id, newUser.email, newUser.name, tx);
+				await sendVerificationEmail(
+					newUser.id,
+					newUser.email,
+					newUser.name,
+					tx,
+				);
 			});
 		} catch (error) {
 			if (error instanceof BadRequestError) {
@@ -253,14 +249,7 @@ export const AuthService = {
 
 			// Send welcome email
 			if (user) {
-				await EmailService.sendWelcomeEmail(user.email, user.name).catch(
-					(error) => {
-						log.error(
-							{ error, userId: record.user_id },
-							"Failed to send welcome email",
-						);
-					},
-				);
+				await EmailService.sendWelcomeEmail(user.email, user.name);
 			}
 
 			log.info({ userId: record.user_id }, "Email verified successfully");

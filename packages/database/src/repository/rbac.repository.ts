@@ -1,6 +1,6 @@
 // This file has been split into separate repository files:
 // - permission.repository.ts
-// - role.repository.ts  
+// - role.repository.ts
 // - user-rbac.repository.ts
 //
 // Please import from those files instead.

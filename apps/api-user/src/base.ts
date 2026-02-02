@@ -5,6 +5,7 @@ import {
 	SecurityPlugin,
 } from "@repo/elysia";
 import { Elysia } from "elysia";
+
 import { env } from "./env";
 
 export const baseApp = new Elysia({ name: "base-app" })

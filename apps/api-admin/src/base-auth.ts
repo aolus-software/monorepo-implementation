@@ -1,25 +1,26 @@
 import { AuthPlugin } from "@repo/elysia";
 import { Elysia } from "elysia";
+
 import { baseApp } from "./base";
 import { db } from "./db";
 import { env } from "./env";
 
 /**
  * Base Authenticated App
- * 
+ *
  * Extends the base app with authentication support.
  * Use this for routes that require authentication.
- * 
+ *
  * Features:
  * - JWT authentication with bearer token
  * - Automatic user information retrieval
  * - Role and permission checking
  * - User caching (when Redis is configured)
- * 
+ *
  * @example
  * ```ts
  * import { baseAuthApp } from './base-auth';
- * 
+ *
  * export const UserModule = new Elysia({ prefix: '/users' })
  *   .use(baseAuthApp)
  *   .get('/', ({ user }) => {

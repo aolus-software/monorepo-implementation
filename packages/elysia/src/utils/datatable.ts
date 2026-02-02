@@ -1,15 +1,9 @@
-import {
-	DatatableType,
-	defaultSort,
-	paginationLength,
-	SortDirection,
-} from "@repo/types/src/index.ts";
+import type { DatatableType, SortDirection } from "@repo/types/src/index.ts";
+import { defaultSort, paginationLength } from "@repo/types/src/index.ts";
 import { t } from "elysia";
 
 // Define the query type that includes filter parameters
-type QueryWithFilters = DatatableType & {
-	[key: string]: unknown;
-};
+type QueryWithFilters = Record<string, string | number | boolean | undefined>;
 
 export const DatatableQueryParams = t.Object({
 	page: t.Number({
@@ -32,13 +26,20 @@ export const DatatableQueryParams = t.Object({
 	),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class DatatableUtils {
 	static parseFilter(query: QueryWithFilters): DatatableType {
-		const page: number = query.page ?? 1;
-		const perPage: number = query.perPage ?? paginationLength;
-		const search: string | undefined = query.search;
-		const orderBy: string = query.sort ?? defaultSort;
-		const orderDirection: SortDirection = query.sortDirection ?? "desc";
+		const page: number = typeof query.page === "number" ? query.page : 1;
+		const perPage: number =
+			typeof query.perPage === "number" ? query.perPage : paginationLength;
+		const search: string | undefined =
+			typeof query.search === "string" ? query.search : undefined;
+		const orderBy: string =
+			typeof query.sort === "string" ? query.sort : defaultSort;
+		const orderDirection: SortDirection =
+			query.sortDirection === "asc" || query.sortDirection === "desc"
+				? query.sortDirection
+				: "desc";
 
 		// Parse filter parameters
 		const filter: Record<string, boolean | string | Date> = {};
@@ -46,7 +47,7 @@ export class DatatableUtils {
 		for (const key in query) {
 			if (key.startsWith("filter[")) {
 				const filterKey = key.slice(7, -1);
-				const value = query[key];
+				const value = query[key] as string | boolean | undefined;
 
 				// Type guard for the value
 				if (typeof value === "string") {

@@ -1,15 +1,14 @@
-import { eq, inArray } from "drizzle-orm";
-import { DbClient, DbTransaction } from ".";
-import { userRoles, roles } from "../schema";
-import {
-	BadRequestError,
-	NotFoundError,
-} from "@repo/elysia";
+import { BadRequestError } from "@repo/types";
+import { and, eq, inArray } from "drizzle-orm";
 
+import { roles, userRoles } from "../schema";
+import type { DbClient, DbTransaction } from ".";
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export const UserRbacRepository = (dbInstance: DbClient) => {
 	return {
 		db: dbInstance,
-		getDb: (tx?: DbTransaction) => tx || (dbInstance as any).$cache,
+		getDb: (tx?: DbTransaction): DbClient | DbTransaction => tx ?? dbInstance,
 
 		/**
 		 * Assign roles to user
@@ -19,7 +18,7 @@ export const UserRbacRepository = (dbInstance: DbClient) => {
 			roleIds: string[],
 			tx?: DbTransaction,
 		): Promise<void> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			// Verify all roles exist
 			if (roleIds.length > 0) {
@@ -33,9 +32,7 @@ export const UserRbacRepository = (dbInstance: DbClient) => {
 			}
 
 			// Remove existing roles
-			await database
-				.delete(userRoles)
-				.where(eq(userRoles.user_id, userId));
+			await database.delete(userRoles).where(eq(userRoles.user_id, userId));
 
 			// Add new roles
 			if (roleIds.length > 0) {
@@ -51,11 +48,8 @@ export const UserRbacRepository = (dbInstance: DbClient) => {
 		/**
 		 * Get user's roles
 		 */
-		getUserRoles: async (
-			userId: string,
-			tx?: DbTransaction,
-		) => {
-			const database = tx || dbInstance;
+		getUserRoles: async (userId: string, tx?: DbTransaction) => {
+			const database = tx ?? dbInstance;
 
 			const userRolesData = await database.query.userRoles.findMany({
 				where: eq(userRoles.user_id, userId),
@@ -75,12 +69,12 @@ export const UserRbacRepository = (dbInstance: DbClient) => {
 			roleId: string,
 			tx?: DbTransaction,
 		): Promise<void> => {
-			const database = tx || dbInstance;
+			const database = tx ?? dbInstance;
 
 			await database
 				.delete(userRoles)
 				.where(
-					eq(userRoles.user_id, userId) && eq(userRoles.role_id, roleId),
+					and(eq(userRoles.user_id, userId), eq(userRoles.role_id, roleId)),
 				);
 		},
 	};

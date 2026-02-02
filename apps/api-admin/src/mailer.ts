@@ -1,4 +1,5 @@
 import { MailerService } from "@repo/mailer";
+
 import { env } from "./env";
 
 export const mailer = new MailerService({

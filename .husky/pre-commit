@@ -1,0 +1,17 @@
+bun install
+bun run format:check
+bun run lint
+bun run db:generate
+bun run db:migrate
+
+# Build packages
+bun run build --filter="@repo/config"
+bun run build --filter="@repo/types"
+bun run build --filter="@repo/utils"
+bun run build --filter="@repo/env"
+bun run build --filter="@repo/elysia"
+bun run build --filter="@repo/database"
+bun run build --filter="@repo/mailer"
+bun run build --filter="@repo/ui"
+
+bun run typecheck

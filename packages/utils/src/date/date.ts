@@ -10,9 +10,10 @@ dayjs.extend(timezone);
 dayjs.extend(relativeTime);
 dayjs.extend(advancedFormat);
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class DateToolkit {
-	constructor(timezone = "UTC") {
-		DateToolkit._configuredTimezone = timezone;
+	constructor(appTimezone = "UTC") {
+		DateToolkit._configuredTimezone = appTimezone;
 	}
 
 	private static _configuredTimezone: string = (() => {
@@ -217,9 +218,7 @@ export class DateToolkit {
 		date: dayjs.Dayjs,
 		tz?: string,
 	): string {
-		if (!tz) {
-			tz = DateToolkit.getConfiguredTimezone();
-		}
+		tz ??= DateToolkit._configuredTimezone;
 		return date.tz(tz).format("dddd, MMMM D, YYYY HH:mm z");
 	}
 

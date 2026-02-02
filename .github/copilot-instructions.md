@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-This is a **monorepo example** built with **Turborepo** and **Bun**, demonstrating clean architecture principles with multiple applications and shared packages.
+This is a **monorepo example** built with **Turborepo** and **Bun**,
+demonstrating clean architecture principles with multiple applications and
+shared packages.
 
 ### Architecture
 
@@ -168,7 +170,6 @@ monorepo-implementation/
 1. **Check `packages/types`** before creating new types or interfaces
    - Look in `packages/types/src/` for existing type definitions
    - Reuse existing types from `@repo/types` instead of duplicating
-   
 2. **Check `packages/utils`** before creating utility functions
    - Look in `packages/utils/src/` for existing utilities
    - Available categories: date, number, security, string
@@ -186,18 +187,18 @@ monorepo-implementation/
 ```typescript
 // Calculate user discount based on membership tier
 function calculateDiscount(user: User): number {
-  // Premium members get higher discount
-  if (user.tier === 'premium') {
-    return 0.2;
-  }
-  
-  // Standard members get basic discount  
-  if (user.tier === 'standard') {
-    return 0.1;
-  }
-  
-  // Free tier gets no discount
-  return 0;
+	// Premium members get higher discount
+	if (user.tier === "premium") {
+		return 0.2;
+	}
+
+	// Standard members get basic discount
+	if (user.tier === "standard") {
+		return 0.1;
+	}
+
+	// Free tier gets no discount
+	return 0;
 }
 ```
 
@@ -224,6 +225,7 @@ function calculateDiscount(user: User): number {
 - UI component code
 
 **Exception**: Icons are acceptable only in:
+
 - UI components where explicitly required by design
 - When user specifically requests them
 

@@ -1,11 +1,12 @@
 import { UserRepository } from "@repo/database";
-import {
+import type {
 	DatatableType,
 	PaginationResponse,
 	UserCreate,
 	UserDetail,
 	UserList,
 } from "@repo/types";
+
 import { db } from "../../../db";
 
 const userRepo = UserRepository(db);

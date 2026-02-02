@@ -1,34 +1,29 @@
-export class BadRequestError extends Error {
-	code: number;
+import { BadRequestError as BaseBadRequestError } from "@repo/types";
+
+export class BadRequestError extends BaseBadRequestError {
 	error?: {
 		field: string;
 		message: string;
 	}[];
 
-	/**
-	 * Represents an error when a request is malformed or contains invalid data.
-	 * @param {string} message - The error message.
-	 */
 	constructor(
 		message: string,
-		error: {
+		error?: {
 			field: string;
 			message: string;
 		}[],
 	) {
-		super(message);
-		this.name = "BadRequestError";
-		this.code = 400;
+		super(message, error);
 		this.error = error;
 	}
 
-	toResponse() {
+	toResponse(): Response {
 		return Response.json(
 			{
 				status: 400,
 				success: false,
 				message: this.message || "Bad Request",
-				errors: this.error || [],
+				errors: this.error ?? [],
 			},
 			{
 				status: 400,

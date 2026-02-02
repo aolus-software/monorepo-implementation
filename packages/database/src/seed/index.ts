@@ -1,10 +1,10 @@
 import "dotenv/config";
 
+import { databaseEnvSchema } from "../../../env/src/index";
 import { getClient } from "../client";
 import { seedPermissions } from "./permissions.seed";
 import { seedRoles } from "./roles.seed";
 import { seedUsers } from "./users.seed";
-import { databaseEnvSchema } from '../../../env/src/index';
 
 const env = databaseEnvSchema.parse(process.env);
 

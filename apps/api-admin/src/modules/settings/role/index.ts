@@ -1,11 +1,11 @@
-import Elysia, { t } from "elysia";
-import { baseAuthApp } from "../../../base-auth";
 import {
 	CommonResponseSchemas,
 	ResponseUtils,
 	SuccessResponseSchema,
 } from "@repo/elysia";
-import { RoleService } from "./service";
+import Elysia, { t } from "elysia";
+
+import { baseAuthApp } from "../../../base-auth";
 import {
 	AssignPermissionsSchema,
 	CreateRoleSchema,
@@ -15,6 +15,7 @@ import {
 	RoleWithPermissionsResponseSchema,
 	UpdateRoleSchema,
 } from "./schema";
+import { RoleService } from "./service";
 
 export const RoleModule = new Elysia({
 	prefix: "/roles",
@@ -32,17 +33,17 @@ export const RoleModule = new Elysia({
 		"/",
 		async ({ query, set }) => {
 			const queryParam = {
-				page: query.page || 1,
-				perPage: query.perPage || 10,
+				page: query.page ?? 1,
+				perPage: query.perPage ?? 10,
 				search: query.search,
-				sort: query.sort || "created_at",
-				sortDirection: query.sortDirection || "desc",
+				sort: query.sort ?? "created_at",
+				sortDirection: query.sortDirection ?? "desc",
 				filter: {
 					name: query["filter[name]"],
 				},
 			};
 
-			const result = await RoleService.findAll(queryParam as any);
+			const result = await RoleService.findAll(queryParam);
 
 			set.status = 200;
 			return ResponseUtils.success(result, "Roles retrieved successfully");
@@ -235,39 +236,6 @@ export const RoleModule = new Elysia({
 				summary: "Assign permissions to role",
 				description:
 					"Replace all existing permissions of a role with the provided list",
-			},
-		},
-	)
-
-	// ============================================
-	// GET SELECT OPTIONS
-	// ============================================
-	.get(
-		"/select/options",
-		async ({ set }) => {
-			const options = await RoleService.selectOptions();
-
-			set.status = 200;
-			return ResponseUtils.success(
-				options,
-				"Role options retrieved successfully",
-			);
-		},
-		{
-			response: {
-				200: SuccessResponseSchema(
-					t.Array(
-						t.Object({
-							value: t.String(),
-							label: t.String(),
-						}),
-					),
-				),
-				401: CommonResponseSchemas[401],
-			},
-			detail: {
-				summary: "Get role select options",
-				description: "Get all roles formatted for select dropdowns",
 			},
 		},
 	);

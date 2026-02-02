@@ -1,12 +1,13 @@
-import { UserInformation } from "@repo/types";
+import type { UserInformation } from "@repo/types";
+
 import { ForbiddenError } from "../errors";
 
 /**
  * Role Guard Helper
- * 
+ *
  * Checks if a user has required roles
  * Superuser role bypasses all role checks
- * 
+ *
  * @example
  * ```ts
  * .get('/admin', ({ user }) => {
@@ -15,6 +16,7 @@ import { ForbiddenError } from "../errors";
  * })
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class RoleGuard {
 	/**
 	 * Check if user has at least one of the required roles
@@ -27,15 +29,15 @@ export class RoleGuard {
 	static canActivate(
 		user: UserInformation,
 		requiredRoles: string[],
-		superuserRole: string = "superuser",
+		superuserRole = "superuser",
 	): boolean {
 		// Superuser has all roles
 		if (user.roles.includes(superuserRole)) {
 			return true;
 		}
 
-		const userRoles = user.roles || [];
-		
+		const userRoles = user.roles;
+
 		// Check if user has any of the required roles
 		const hasAnyRole = requiredRoles.some((role) => userRoles.includes(role));
 
@@ -59,15 +61,15 @@ export class RoleGuard {
 	static canActivateAll(
 		user: UserInformation,
 		roles: string[],
-		superuserRole: string = "superuser",
+		superuserRole = "superuser",
 	): boolean {
 		// Superuser has all roles
 		if (user.roles.includes(superuserRole)) {
 			return true;
 		}
 
-		const userRoles = user.roles || [];
-		
+		const userRoles = user.roles;
+
 		// Check if user has all required roles
 		const hasAllRoles = roles.every((role) => userRoles.includes(role));
 

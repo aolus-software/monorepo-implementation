@@ -1,5 +1,5 @@
 import { PermissionRepository } from "@repo/database";
-import {
+import type {
 	DatatableType,
 	PaginationResponse,
 	PermissionBulkCreate,
@@ -7,6 +7,7 @@ import {
 	PermissionDetail,
 	PermissionList,
 } from "@repo/types";
+
 import { db } from "../../../db";
 
 const permissionRepo = PermissionRepository(db);
@@ -29,7 +30,7 @@ export const PermissionService = {
 	 */
 	findById: async (id: string): Promise<PermissionDetail> => {
 		const permission = await permissionRepo.findById(id);
-		
+
 		if (!permission) {
 			throw new Error("Permission not found");
 		}
@@ -47,7 +48,9 @@ export const PermissionService = {
 	/**
 	 * Create multiple permissions at once
 	 */
-	createBulk: async (data: PermissionBulkCreate): Promise<PermissionDetail[]> => {
+	createBulk: async (
+		data: PermissionBulkCreate,
+	): Promise<PermissionDetail[]> => {
 		return await permissionRepo.createBulk(data.group, data.names);
 	},
 
@@ -66,19 +69,5 @@ export const PermissionService = {
 	 */
 	delete: async (id: string): Promise<void> => {
 		await permissionRepo.delete(id);
-	},
-
-	/**
-	 * Get all permissions as select options
-	 */
-	selectOptions: async () => {
-		return await permissionRepo.selectOptions();
-	},
-
-	/**
-	 * Get all permissions grouped by group
-	 */
-	getAllGrouped: async () => {
-		return await permissionRepo.getAllGrouped();
 	},
 };

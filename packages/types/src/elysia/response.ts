@@ -2,31 +2,31 @@
 // RESPONSE TYPES
 // ============================================
 
-export type SuccessResponse<T> = {
+export interface SuccessResponse<T> {
 	status: number;
 	success: true;
 	message: string;
 	data: T;
-};
+}
 
-export type ErrorResponse = {
+export interface ErrorResponse {
 	status: number;
 	success: false;
 	message: string;
 	data: null;
-};
+}
 
-export type ValidationErrorResponse = {
+export interface ValidationErrorResponse {
 	status: number;
 	success: false;
 	message: string;
-	errors: Array<{
+	errors: {
 		field: string;
 		message: string;
-	}>;
-};
+	}[];
+}
 
-export type PaginatedResponse<T> = {
+export interface PaginatedResponse<T> {
 	status: number;
 	success: true;
 	message: string;
@@ -38,4 +38,4 @@ export type PaginatedResponse<T> = {
 			totalCount: number;
 		};
 	};
-};
+}

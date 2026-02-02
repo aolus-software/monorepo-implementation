@@ -1,13 +1,14 @@
+import { ResponseUtils, SuccessResponseSchema } from "@repo/elysia";
+import { apiEnvSchema } from "@repo/env";
 import { Elysia, t } from "elysia";
+
+import { baseApp } from "../../base";
+import { db } from "../../db";
 import {
 	AppInfoSchema,
 	HealthCheckErrorSchema,
 	HealthCheckSuccessSchema,
 } from "./schema";
-import { baseApp } from "../../base";
-import { ResponseUtils, SuccessResponseSchema } from "@repo/elysia";
-import { apiEnvSchema } from "@repo/env";
-import { db } from "../../db";
 
 export const HomeModule = new Elysia({
 	detail: { tags: ["General"], security: [], description: "General APIs" },

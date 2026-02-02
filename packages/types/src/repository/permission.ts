@@ -1,25 +1,25 @@
-export type PermissionList = {
+export interface PermissionList {
 	id: string;
 	name: string;
 	group: string;
 	created_at: Date;
 	updated_at: Date;
-};
+}
 
-export type PermissionDetail = {
+export interface PermissionDetail {
 	id: string;
 	name: string;
 	group: string;
 	created_at: Date;
 	updated_at: Date;
-};
+}
 
-export type PermissionCreate = {
+export interface PermissionCreate {
 	name: string;
 	group: string;
-};
+}
 
-export type PermissionBulkCreate = {
+export interface PermissionBulkCreate {
 	group: string;
 	names: string[];
-};
+}

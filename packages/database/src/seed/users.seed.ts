@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
+import { HashUtils } from "../../../utils/src/security/hash";
 import type { schema } from "../schema";
 import { roles, userRoles, users } from "../schema";
-import { HashUtils } from '../../../utils/src/security/hash';
 
 const userData = [
 	{
@@ -60,7 +60,6 @@ export async function seedUsers(
 				user_id: user.id,
 				role_id: role.id,
 			});
-
 		}
 	}
 }

@@ -1,5 +1,6 @@
 import * as CryptoJS from "crypto-js";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class EncryptionUtils {
 	private static secretKey: string;
 

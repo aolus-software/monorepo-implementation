@@ -1,7 +1,8 @@
-import Elysia from "elysia";
-import { bootstraps } from "./modules";
 import { DocsPlugin } from "@repo/elysia";
+import Elysia from "elysia";
+
 import { env } from "./env";
+import { bootstraps } from "./modules";
 
 const app = new Elysia()
 	.use(

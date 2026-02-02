@@ -11,7 +11,7 @@ export class ForbiddenError extends Error {
 		this.code = 403;
 	}
 
-	toResponse() {
+	toResponse(): Response {
 		return Response.json(
 			{
 				status: 403,

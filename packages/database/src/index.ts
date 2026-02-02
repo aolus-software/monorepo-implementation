@@ -1,6 +1,6 @@
 export * from "./client";
-export * from "./schema/index";
 export * from "./repository/index";
+export * from "./schema/index";
 
 // Re-export commonly used drizzle-orm functions
-export { eq, and, or, not, isNull, isNotNull, sql } from "drizzle-orm";
+export { and, eq, isNotNull, isNull, not, or, sql } from "drizzle-orm";

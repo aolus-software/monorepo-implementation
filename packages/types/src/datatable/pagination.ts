@@ -1,13 +1,13 @@
-export type PaginationResponse<T> = {
+export interface PaginationResponse<T> {
 	data: T[];
 	meta: {
 		page: number;
 		limit: number;
 		totalCount: number;
 	};
-};
+}
 
-export type PaginationKeySetResponse<T> = {
+export interface PaginationKeySetResponse<T> {
 	data: T[];
 	meta: {
 		page: number;
@@ -16,4 +16,4 @@ export type PaginationKeySetResponse<T> = {
 		nextCursor: string | null;
 		previousCursor: string | null;
 	};
-};
+}

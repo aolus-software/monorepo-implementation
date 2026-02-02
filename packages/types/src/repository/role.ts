@@ -1,12 +1,12 @@
-export type RoleList = {
+export interface RoleList {
 	id: string;
 	name: string;
 	permissions_count: number;
 	created_at: Date;
 	updated_at: Date;
-};
+}
 
-export type RoleDetail = {
+export interface RoleDetail {
 	id: string;
 	name: string;
 	permissions: {
@@ -16,9 +16,9 @@ export type RoleDetail = {
 	}[];
 	created_at: Date;
 	updated_at: Date;
-};
+}
 
-export type RoleWithPermissions = {
+export interface RoleWithPermissions {
 	id: string;
 	name: string;
 	permissions: {
@@ -29,14 +29,14 @@ export type RoleWithPermissions = {
 	}[];
 	created_at: Date;
 	updated_at: Date;
-};
+}
 
-export type RoleCreate = {
+export interface RoleCreate {
 	name: string;
 	permission_ids?: string[];
-};
+}
 
-export type RoleUpdate = {
+export interface RoleUpdate {
 	name?: string;
 	permission_ids?: string[];
-};
+}

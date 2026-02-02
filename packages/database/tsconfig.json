@@ -6,11 +6,6 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"baseUrl": ".",
-		"composite": true,
-		"declaration": true,
-		"declarationMap": true,
-		"outDir": "./dist",
-		"noEmit": false,
 		"paths": {
 			"@repo/types": ["../types/src/index.ts"],
 			"@repo/elysia": ["../elysia/src/index.ts"],
@@ -18,16 +13,5 @@
 		}
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules", "dist"],
-	"references": [
-		{
-			"path": "../types"
-		},
-		{
-			"path": "../elysia"
-		},
-		{
-			"path": "../utils"
-		}
-	]
+	"exclude": ["node_modules", "dist"]
 }

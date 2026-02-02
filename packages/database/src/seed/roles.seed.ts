@@ -64,7 +64,7 @@ export async function seedRoles(
 			);
 		}
 
-    // Clear existing role-permission assignments
+		// Clear existing role-permission assignments
 		await db
 			.delete(rolePermissions)
 			.where(eq(rolePermissions.role_id, role.id));

@@ -13,12 +13,8 @@
 		"resolveJsonModule": true,
 
 		/* Emit */
-		"declaration": true,
-		"declarationMap": true,
 		"sourceMap": true,
-		"outDir": "./dist",
 		"removeComments": true,
-		"noEmit": false,
 
 		/* Interop Constraints */
 		"allowSyntheticDefaultImports": true,

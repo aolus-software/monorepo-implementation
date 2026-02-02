@@ -1,3 +1,3 @@
-export * from "./user";
-export * from "./permission";
-export * from "./role";
+export type * from "./permission";
+export type * from "./role";
+export type * from "./user";

@@ -1,4 +1,5 @@
-export * from "./datatable/index";
+export type * from "./datatable/index";
 export * from "./default/index";
-export * from "./elysia/index";
-export * from "./repository/index";
+export type * from "./elysia/index";
+export * from "./errors/index";
+export type * from "./repository/index";
