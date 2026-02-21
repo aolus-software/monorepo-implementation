@@ -28,17 +28,19 @@ export const DatatableQueryParams = t.Object({
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class DatatableUtils {
-	static parseFilter(query: QueryWithFilters): DatatableType {
-		const page: number = typeof query.page === "number" ? query.page : 1;
+	static parseFilter<T>(query: QueryWithFilters): DatatableType<T> {
+		const page: number = typeof query["page"] === "number" ? query["page"] : 1;
 		const perPage: number =
-			typeof query.perPage === "number" ? query.perPage : paginationLength;
+			typeof query["perPage"] === "number"
+				? query["perPage"]
+				: paginationLength;
 		const search: string | undefined =
-			typeof query.search === "string" ? query.search : undefined;
+			typeof query["search"] === "string" ? query["search"] : undefined;
 		const orderBy: string =
-			typeof query.sort === "string" ? query.sort : defaultSort;
+			typeof query["sort"] === "string" ? query["sort"] : defaultSort;
 		const orderDirection: SortDirection =
-			query.sortDirection === "asc" || query.sortDirection === "desc"
-				? query.sortDirection
+			query["sortDirection"] === "asc" || query["sortDirection"] === "desc"
+				? query["sortDirection"]
 				: "desc";
 
 		// Parse filter parameters
@@ -70,24 +72,7 @@ export class DatatableUtils {
 			search,
 			sort: orderBy,
 			sortDirection: orderDirection,
-			filter: Object.keys(filter).length > 0 ? filter : undefined,
+			filter: filter as Partial<T>,
 		};
 	}
-
-	// static parseSort(
-	// 	validateOrderBy: Record<string, PgColumn>,
-	// 	orderBy: string,
-	// ): PgColumn {
-	// 	type OrderableKey = keyof typeof validateOrderBy;
-
-	// 	const normalizedOrderBy: OrderableKey = Object.keys(
-	// 		validateOrderBy,
-	// 	).includes(orderBy)
-	// 		? orderBy
-	// 		: "id";
-
-	// 	const orderColumn = validateOrderBy[normalizedOrderBy];
-
-	// 	return orderColumn;
-	// }
 }

@@ -67,7 +67,10 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			const sortDirection = queryParam.sortDirection === "asc" ? asc : desc;
 
 			// Determine sort field
-			let sortField = permissions.created_at;
+			let sortField:
+				| typeof permissions.created_at
+				| typeof permissions.name
+				| typeof permissions.group = permissions.created_at;
 			if (queryParam.sort === "name") {
 				sortField = permissions.name;
 			} else if (queryParam.sort === "group") {
@@ -157,6 +160,12 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 					group: data.group,
 				})
 				.returning();
+
+			if (!permission) {
+				throw new BadRequestError(
+					"Failed to create permission, please try again",
+				);
+			}
 
 			return {
 				id: permission.id,
@@ -251,6 +260,12 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 				.where(eq(permissions.id, id))
 				.returning();
 
+			if (!updated) {
+				throw new BadRequestError(
+					"Failed to update permission, please try again",
+				);
+			}
+
 			return {
 				id: updated.id,
 				name: updated.name,
@@ -314,8 +329,9 @@ export const PermissionRepository = (dbInstance: DbClient) => {
 			// Group by group
 			const grouped = data.reduce<Record<string, typeof data>>(
 				(acc, permission) => {
-					acc[permission.group] ??= [];
-					acc[permission.group].push(permission);
+					const group = (acc[permission.group] ??= []);
+
+					group.push(permission);
 					return acc;
 				},
 				{},

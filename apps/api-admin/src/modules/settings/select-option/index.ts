@@ -17,7 +17,7 @@ import { SelectOptionService } from "./service";
 export const SelectOptionModule = new Elysia({
 	prefix: "/select-options",
 	detail: {
-		tags: ["Settings/Select Options"],
+		tags: ["Settings - Select Options"],
 		description: "APIs for retrieving select options for settings",
 	},
 })
@@ -42,6 +42,7 @@ export const SelectOptionModule = new Elysia({
 				description:
 					"Retrieve select options for permissions. Requires authentication and superuser role.",
 			},
+
 			rbac: { roles: ["superuser"] },
 		},
 	)

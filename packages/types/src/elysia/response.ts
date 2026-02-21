@@ -3,6 +3,7 @@
 // ============================================
 
 export interface SuccessResponse<T> {
+	[key: string]: unknown;
 	status: number;
 	success: true;
 	message: string;
@@ -10,6 +11,7 @@ export interface SuccessResponse<T> {
 }
 
 export interface ErrorResponse {
+	[key: string]: unknown;
 	status: number;
 	success: false;
 	message: string;
@@ -17,6 +19,7 @@ export interface ErrorResponse {
 }
 
 export interface ValidationErrorResponse {
+	[key: string]: unknown;
 	status: number;
 	success: false;
 	message: string;
@@ -27,6 +30,7 @@ export interface ValidationErrorResponse {
 }
 
 export interface PaginatedResponse<T> {
+	[key: string]: unknown;
 	status: number;
 	success: true;
 	message: string;

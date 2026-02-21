@@ -65,7 +65,8 @@ export const HelmetDefaultOptions = defaultOptions.helmetOptions;
 
 export const SecurityPlugin = (
 	options: SecurityPluginsOptions = defaultOptions,
-): Elysia => {
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+) => {
 	options.corsOptions ??= defaultOptions.corsOptions;
 	options.rateLimitOptions ??= defaultOptions.rateLimitOptions;
 	options.helmetOptions ??= defaultOptions.helmetOptions;

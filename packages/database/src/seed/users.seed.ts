@@ -54,7 +54,7 @@ export async function seedUsers(
 			.from(roles)
 			.where(eq(roles.name, userInfo.role));
 
-		if (role) {
+		if (role && user) {
 			await db.delete(userRoles).where(eq(userRoles.user_id, user.id));
 			await db.insert(userRoles).values({
 				user_id: user.id,

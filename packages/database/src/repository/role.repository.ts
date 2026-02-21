@@ -54,7 +54,8 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			const sortDirection = queryParam.sortDirection === "asc" ? asc : desc;
 
 			// Determine sort field
-			let sortField = roles.created_at;
+			let sortField: typeof roles.created_at | typeof roles.name =
+				roles.created_at;
 			if (queryParam.sort === "name") {
 				sortField = roles.name;
 			}
@@ -214,6 +215,10 @@ export const RoleRepository = (dbInstance: DbClient) => {
 				})
 				.returning();
 
+			if (!role) {
+				throw new BadRequestError("Failed to create role, please try again");
+			}
+
 			// Assign permissions if provided
 			if (data.permission_ids && data.permission_ids.length > 0) {
 				await database.insert(rolePermissions).values(
@@ -225,12 +230,12 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			}
 
 			// Fetch the created role with permissions
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-			const createdRole = await this.findById(role.id, database);
+
+			const createdRole = await RoleRepository(dbInstance).findById(role.id);
 			if (!createdRole) {
 				throw new NotFoundError("Failed to retrieve created role");
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
 			return createdRole;
 		},
 
@@ -294,12 +299,12 @@ export const RoleRepository = (dbInstance: DbClient) => {
 			}
 
 			// Fetch the updated role with permissions
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-			const updatedRole = await this.findById(id, database);
+
+			const updatedRole = await RoleRepository(dbInstance).findById(id);
 			if (!updatedRole) {
 				throw new NotFoundError("Failed to retrieve updated role");
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
 			return updatedRole;
 		},
 

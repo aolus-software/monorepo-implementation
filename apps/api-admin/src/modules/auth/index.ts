@@ -1,6 +1,3 @@
-// import { baseApp } from "@app/apis/base";
-// import { UserInformation } from "@app/apis/types/UserInformation";
-// import { Cache, UserInformationCacheKey } from "@cache/*";
 import { jwt } from "@elysiajs/jwt";
 import {
 	CommonResponseSchemas,
@@ -8,12 +5,6 @@ import {
 	SuccessResponseSchema,
 } from "@repo/elysia";
 import type { UserInformation } from "@repo/types";
-// import {
-// 	CommonResponseSchemas,
-// 	ResponseUtils,
-// 	SuccessResponseSchema,
-// } from "@toolkit/response";
-// import { JWT_CONFIG } from "config/jwt.config";
 import Elysia, { t } from "elysia";
 
 import { baseApp } from "../../base";

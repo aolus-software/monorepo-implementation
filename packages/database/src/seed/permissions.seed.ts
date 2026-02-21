@@ -40,7 +40,12 @@ export async function seedPermissions(
 
 	await db
 		.insert(permissions)
-		.values(permissionData)
+		.values(
+			permissionData.map((perm) => ({
+				name: perm.name,
+				group: perm.group,
+			})),
+		)
 		.onConflictDoNothing({ target: permissions.name });
 
 	// eslint-disable-next-line no-console

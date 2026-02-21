@@ -1,11 +1,6 @@
 import { BadRequestError as BaseBadRequestError } from "@repo/types";
 
 export class BadRequestError extends BaseBadRequestError {
-	error?: {
-		field: string;
-		message: string;
-	}[];
-
 	constructor(
 		message: string,
 		error?: {

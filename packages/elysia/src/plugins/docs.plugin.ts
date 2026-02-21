@@ -18,7 +18,7 @@ export const DocsPlugin = (
 			enabled: options.enable,
 			documentation: {
 				info: {
-					title: `API ${options.appName}`,
+					title: options.appName,
 					version: "1.0.0",
 					description: `API documentation for ${options.appName}`,
 					license: {

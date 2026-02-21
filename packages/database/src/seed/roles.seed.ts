@@ -65,17 +65,19 @@ export async function seedRoles(
 		}
 
 		// Clear existing role-permission assignments
-		await db
-			.delete(rolePermissions)
-			.where(eq(rolePermissions.role_id, role.id));
+		if (role) {
+			await db
+				.delete(rolePermissions)
+				.where(eq(rolePermissions.role_id, role.id));
 
-		if (permissionsToAssign.length > 0) {
-			await db.insert(rolePermissions).values(
-				permissionsToAssign.map((p) => ({
-					role_id: role.id,
-					permission_id: p.id,
-				})),
-			);
+			if (permissionsToAssign.length > 0) {
+				await db.insert(rolePermissions).values(
+					permissionsToAssign.map((p) => ({
+						role_id: role.id,
+						permission_id: p.id,
+					})),
+				);
+			}
 		}
 	}
 }

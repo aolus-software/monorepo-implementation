@@ -12,62 +12,31 @@ import { ForbiddenError, UnauthorizedError } from "../errors";
 // TYPES & INTERFACES
 // ============================================
 
-/**
- * JWT Payload structure
- */
 interface JWTPayload {
 	id: string;
 	[key: string]: unknown;
 }
 
-/**
- * Cache interface for optional caching support
- */
 interface CacheProvider {
 	get(key: string): Promise<UserInformation | null>;
 	set(key: string, value: UserInformation, ttl?: number): Promise<void>;
 	delete(key: string): Promise<void>;
 }
 
-/**
- * Configuration options for AuthPlugin
- */
 interface AuthPluginOptions {
-	/**
-	 * JWT configuration
-	 */
 	jwt: {
-		name?: string;
 		secret: string;
 		exp?: string;
 		alg?: "HS256" | "HS384" | "HS512" | "RS256" | "RS384" | "RS512";
 	};
-
-	/**
-	 * Database client instance for user lookups
-	 */
 	db: DbClient;
-
-	/**
-	 * Optional cache provider for user information caching
-	 * If provided, user data will be cached to reduce database queries
-	 */
+	// Reduces database queries by caching user lookups
 	cache?: {
 		provider: CacheProvider;
-		ttl?: number; // Cache TTL in seconds (default: 3600)
-		keyPrefix?: string; // Cache key prefix (default: "user:")
+		ttl?: number;
+		keyPrefix?: string;
 	};
-
-	/**
-	 * Whether to automatically check if user is authenticated
-	 * If false, routes must manually check authentication
-	 * @default true
-	 */
 	requireAuth?: boolean;
-
-	/**
-	 * Custom error messages
-	 */
 	messages?: {
 		noToken?: string;
 		invalidToken?: string;
@@ -75,46 +44,20 @@ interface AuthPluginOptions {
 	};
 }
 
-/**
- * RBAC Guard configuration
- */
-interface RBACGuardOptions {
-	/**
-	 * Required roles (user must have at least one)
-	 */
-	roles?: string[];
-
-	/**
-	 * Required permissions (user must have all)
-	 */
-	permissions?: string[];
-
-	/**
-	 * Bypass role for superuser/admin
-	 * @default "superuser"
-	 */
-	superuserRole?: string;
-}
-
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Generate cache key for user information
- */
 const getUserCacheKey = (userId: string, prefix = "user:"): string => {
 	return `${prefix}${userId}`;
 };
 
-/**
- * Check if user has required roles
- */
 const checkRoles = (
 	user: UserInformation,
 	requiredRoles: string[],
 	superuserRole = "superuser",
 ): boolean => {
+	// Superuser bypasses all role checks
 	if (user.roles.includes(superuserRole)) {
 		return true;
 	}
@@ -122,14 +65,12 @@ const checkRoles = (
 	return requiredRoles.some((role) => user.roles.includes(role));
 };
 
-/**
- * Check if user has required permissions
- */
 const checkPermissions = (
 	user: UserInformation,
 	requiredPermissions: string[],
 	superuserRole = "superuser",
 ): boolean => {
+	// Superuser bypasses all permission checks
 	if (user.roles.includes(superuserRole)) {
 		return true;
 	}
@@ -143,38 +84,8 @@ const checkPermissions = (
 // AUTH PLUGIN
 // ============================================
 
-/**
- * Enhanced Authentication Plugin with RBAC support
- *
- * Features:
- * - JWT authentication with bearer token
- * - User information retrieval from database
- * - Optional caching for performance
- * - Role-Based Access Control (RBAC)
- * - Permission checking
- * - Customizable configuration
- *
- * @example
- * ```ts
- * const app = new Elysia()
- *   .use(AuthPlugin({
- *     jwt: {
- *       secret: env.JWT_SECRET,
- *       exp: '1d'
- *     },
- *     db: db,
- *     cache: {
- *       provider: redisCache,
- *       ttl: 3600
- *     }
- *   }))
- *   .get('/profile', ({ user }) => user)
- *   .guard({ roles: ['admin'] }, (app) =>
- *     app.get('/admin', () => 'Admin only')
- *   )
- * ```
- */
-export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+export const AuthPlugin = (options: AuthPluginOptions) => {
 	const {
 		jwt: jwtConfig,
 		db,
@@ -189,9 +100,8 @@ export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
 		userNotFound: messages.userNotFound ?? "User not found",
 	};
 
-	// Setup JWT with default values
 	const jwtOptions: JWTOption<string> = {
-		name: jwtConfig.name ?? "jwt",
+		name: "jwt",
 		secret: jwtConfig.secret,
 		exp: jwtConfig.exp,
 		alg: jwtConfig.alg,
@@ -201,31 +111,31 @@ export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
 		new Elysia({ name: "auth" })
 			.use(jwt(jwtOptions))
 			.use(bearer())
-			// Derive user information from bearer token
-			.derive({ as: "global" }, async (context) => {
-				// If auth is not required, allow request without token
-				if (!requireAuth && !context.bearer) {
+			// eslint-disable-next-line @typescript-eslint/no-shadow
+			.derive({ as: "global" }, async ({ jwt, bearer }) => {
+				// Allow unauthenticated requests when auth is optional
+				if (!requireAuth && !bearer) {
 					return { user: null as UserInformation | null };
 				}
 
-				// If auth is required, token must be present
-				if (!context.bearer) {
+				if (!jwt) {
+					throw new UnauthorizedError(errorMessages.noToken);
+				}
+
+				if (!bearer) {
 					throw new UnauthorizedError(errorMessages.noToken);
 				}
 
 				let user: UserInformation | null = null;
 
 				try {
-					// Verify JWT token
-					const payload = (await context.jwt.verify(context.bearer)) as
-						| JWTPayload
-						| false;
+					const payload = (await jwt.verify(bearer)) as JWTPayload | false;
 
 					if (!payload || typeof payload === "boolean" || !payload.id) {
 						throw new UnauthorizedError(errorMessages.invalidToken);
 					}
 
-					// Ensure payload.id is a string
+					// Normalize id to string regardless of how it was encoded in the token
 					const userId =
 						typeof payload.id === "string"
 							? payload.id
@@ -237,7 +147,6 @@ export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
 						throw new UnauthorizedError("Invalid user ID in token");
 					}
 
-					// Try to get from cache if available
 					if (cache?.provider) {
 						const cacheKey = getUserCacheKey(
 							userId,
@@ -246,15 +155,11 @@ export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
 						user = await cache.provider.get(cacheKey);
 					}
 
-					// If not in cache, fetch from database
 					if (!user) {
 						const userRepo = UserRepository(db);
-						// UserInformation throws UnauthorizedError if user not found
-
 						const userInfo = await userRepo.UserInformation(userId);
 						user = userInfo;
 
-						// Cache the user information if cache is available
 						if (cache?.provider) {
 							const cacheKey = getUserCacheKey(
 								userId,
@@ -264,54 +169,38 @@ export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
 						}
 					}
 				} catch (error: unknown) {
-					// If error is already an UnauthorizedError, re-throw it
+					// Re-throw known errors, wrap everything else as invalid token
 					if (error instanceof UnauthorizedError) {
 						throw error;
 					}
-					// Otherwise, throw generic invalid token error
 					throw new UnauthorizedError(errorMessages.invalidToken);
 				}
 
 				return { user };
 			})
-			.macro(({ onBeforeHandle }) => ({
-				/**
-				 * RBAC Guard Macro
-				 * Usage: .rbac({ roles: [...], permissions: [...] })
-				 */
-				// todo: rebuild the auth macro to avoid this unsafe cast
-				rbac(config: RBACGuardOptions) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-					onBeforeHandle((context) => {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-						const user = context.user as UserInformation | null;
-
+			.macro({
+				rbac: (roleOptions: { roles?: string[]; permissions?: string[] }) => ({
+					beforeHandle({ user }) {
 						if (!user) {
 							throw new UnauthorizedError(errorMessages.noToken);
 						}
 
-						const superuserRole = config.superuserRole ?? "superuser";
+						const { roles, permissions } = roleOptions;
 
-						// Check roles if specified
-						if (config.roles && config.roles.length > 0) {
-							if (!checkRoles(user, config.roles, superuserRole)) {
-								throw new ForbiddenError(
-									"You do not have the required roles to access this resource.",
-								);
-							}
+						if (roles && !checkRoles(user, roles)) {
+							throw new ForbiddenError(
+								"You do not have the required roles to access this resource.",
+							);
 						}
 
-						// Check permissions if specified
-						if (config.permissions && config.permissions.length > 0) {
-							if (!checkPermissions(user, config.permissions, superuserRole)) {
-								throw new ForbiddenError(
-									"You do not have the required permissions to access this resource.",
-								);
-							}
+						if (permissions && !checkPermissions(user, permissions)) {
+							throw new ForbiddenError(
+								"You do not have the required permissions to access this resource.",
+							);
 						}
-					});
-				},
-			}))
+					},
+				}),
+			})
 	);
 };
 
@@ -319,9 +208,6 @@ export const AuthPlugin = (options: AuthPluginOptions): Elysia => {
 // STANDALONE GUARD HELPERS
 // ============================================
 
-/**
- * Check if user has required roles (for manual checking)
- */
 export const requireRoles = (
 	user: UserInformation,
 	roles: string[],
@@ -334,9 +220,6 @@ export const requireRoles = (
 	}
 };
 
-/**
- * Check if user has required permissions (for manual checking)
- */
 export const requirePermissions = (
 	user: UserInformation,
 	permissions: string[],

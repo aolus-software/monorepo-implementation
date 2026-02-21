@@ -1,5 +1,5 @@
 export class RateLimitError extends Error {
-	constructor(public message = "rate-limited") {
+	constructor(message = "rate-limited") {
 		super(message);
 	}
 

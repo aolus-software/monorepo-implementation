@@ -13,16 +13,23 @@ import { t } from "elysia";
 
 export const SuccessResponseSchema = (
 	dataSchema: TSchema,
+	status = 200,
 ): ReturnType<typeof t.Object> =>
 	t.Object({
-		status: t.Number(),
+		status: t.Number({
+			default: status,
+			description: "HTTP status code",
+		}),
 		success: t.Literal(true),
 		message: t.String(),
 		data: dataSchema,
 	});
 
 export const ErrorResponseSchema = t.Object({
-	status: t.Number(),
+	status: t.Number({
+		default: 400,
+		description: "HTTP status code",
+	}),
 	success: t.Literal(false),
 	message: t.String(),
 	data: t.Null(),
@@ -41,7 +48,10 @@ export const BadRequestResponseSchema = t.Object({
 });
 
 export const ValidationErrorResponseSchema = t.Object({
-	status: t.Number(),
+	status: t.Number({
+		default: 422,
+		description: "HTTP status code for validation errors",
+	}),
 	success: t.Literal(false),
 	message: t.String(),
 	errors: t.Array(
@@ -54,9 +64,12 @@ export const ValidationErrorResponseSchema = t.Object({
 
 export const PaginatedResponseSchema = (
 	itemSchema: TSchema,
+	status = 200,
 ): ReturnType<typeof t.Object> =>
 	t.Object({
-		status: t.Number(),
+		status: t.Number({
+			default: status,
+		}),
 		success: t.Literal(true),
 		message: t.String(),
 		data: t.Object({
@@ -296,7 +309,7 @@ export const CommonResponseSchemas = {
 // Helper to create response schema with specific data type
 export const createResponseSchema = (
 	dataSchema: TSchema,
-): ReturnType<typeof t.Object> => ({
+): Record<number, TSchema> => ({
 	200: SuccessResponseSchema(dataSchema),
 	400: ErrorResponseSchema,
 	401: CommonResponseSchemas[401],
@@ -308,7 +321,7 @@ export const createResponseSchema = (
 // Helper to create paginated response schema
 export const createPaginatedResponseSchema = (
 	itemSchema: TSchema,
-): ReturnType<typeof t.Object> => ({
+): Record<number, TSchema> => ({
 	200: PaginatedResponseSchema(itemSchema),
 	400: ErrorResponseSchema,
 	401: CommonResponseSchemas[401],
