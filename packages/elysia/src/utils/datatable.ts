@@ -1,5 +1,5 @@
-import type { DatatableType, SortDirection } from "@repo/types/src/index.ts";
-import { defaultSort, paginationLength } from "@repo/types/src/index.ts";
+import type { DatatableType, SortDirection } from "@repo/types";
+import { defaultSort, paginationLength } from "@repo/types";
 import { t } from "elysia";
 
 // Define the query type that includes filter parameters

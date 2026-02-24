@@ -1,7 +1,8 @@
 import { ResponseUtils, SuccessResponseSchema } from "@repo/elysia";
-import { apiEnvSchema } from "@repo/env";
 import { Elysia, t } from "elysia";
 
+import { DateToolkit } from "../../../../../packages/utils/src/date/date";
+import { env } from "../../../../api-admin/src/env";
 import { baseApp } from "../../base";
 import { db } from "../../db";
 import {
@@ -15,18 +16,18 @@ export const HomeModule = new Elysia({
 })
 	.use(baseApp)
 	// ============================================
-	// GET: / ROOT ENDPOINT
+	// ROOT ENDPOINT
 	// ============================================
 	.get(
 		"/",
 		() => {
-			const env = apiEnvSchema.parse(process.env);
-
 			return ResponseUtils.success(
 				{
 					app_name: env.APP_NAME,
 					app_env: env.NODE_ENV,
-					date: new Date().toISOString(),
+					date: DateToolkit.getDateTimeInformativeWithTimezone(
+						DateToolkit.now(),
+					),
 				},
 				`Welcome to ${env.APP_NAME}`,
 			);
@@ -50,14 +51,16 @@ export const HomeModule = new Elysia({
 		async ({ set }) => {
 			const healthStatus = {
 				status: "healthy",
-				timestamp: new Date().toISOString(),
+				timestamp: DateToolkit.getDateTimeInformativeWithTimezone(
+					DateToolkit.now(),
+				),
 				services: {
 					database: "healthy",
 					redis: "healthy",
 				},
 			};
 
-			// TODO: Check Redis
+			// Check Redis
 			// try {
 			// 	const redis = RedisClient.getRedisClient();
 			// 	await redis.ping();
@@ -112,7 +115,6 @@ export const HomeModule = new Elysia({
 	.get(
 		"/live",
 		() => {
-			// Simple check that the service is running
 			return ResponseUtils.success({ alive: true }, "Service is alive");
 		},
 		{

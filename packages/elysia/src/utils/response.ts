@@ -1,9 +1,3 @@
-import type {
-	ErrorResponse,
-	PaginatedResponse,
-	SuccessResponse,
-	ValidationErrorResponse,
-} from "@repo/types/src/index.ts";
 import type { TSchema } from "elysia";
 import { t } from "elysia";
 
@@ -11,25 +5,16 @@ import { t } from "elysia";
 // RESPONSE TYPE DEFINITIONS
 // ============================================
 
-export const SuccessResponseSchema = (
-	dataSchema: TSchema,
-	status = 200,
-): ReturnType<typeof t.Object> =>
+export const SuccessResponseSchema = (dataSchema: TSchema): TSchema =>
 	t.Object({
-		status: t.Number({
-			default: status,
-			description: "HTTP status code",
-		}),
+		status: t.Literal(200),
 		success: t.Literal(true),
 		message: t.String(),
 		data: dataSchema,
 	});
 
 export const ErrorResponseSchema = t.Object({
-	status: t.Number({
-		default: 400,
-		description: "HTTP status code",
-	}),
+	status: t.Literal(400),
 	success: t.Literal(false),
 	message: t.String(),
 	data: t.Null(),
@@ -48,10 +33,7 @@ export const BadRequestResponseSchema = t.Object({
 });
 
 export const ValidationErrorResponseSchema = t.Object({
-	status: t.Number({
-		default: 422,
-		description: "HTTP status code for validation errors",
-	}),
+	status: t.Literal(422),
 	success: t.Literal(false),
 	message: t.String(),
 	errors: t.Array(
@@ -62,14 +44,9 @@ export const ValidationErrorResponseSchema = t.Object({
 	),
 });
 
-export const PaginatedResponseSchema = (
-	itemSchema: TSchema,
-	status = 200,
-): ReturnType<typeof t.Object> =>
+export const PaginatedResponseSchema = (itemSchema: TSchema): TSchema =>
 	t.Object({
-		status: t.Number({
-			default: status,
-		}),
+		status: t.Literal(200),
 		success: t.Literal(true),
 		message: t.String(),
 		data: t.Object({
@@ -83,11 +60,105 @@ export const PaginatedResponseSchema = (
 	});
 
 // ============================================
-// RESPONSE TOOLKIT
+// RESPONSE TYPES
 // ============================================
 
+export interface SuccessResponse200<T> {
+	status: 200;
+	success: true;
+	message: string;
+	data: T;
+}
+
+export interface SuccessResponse201<T> {
+	status: 201;
+	success: true;
+	message: string;
+	data: T;
+}
+
+export interface SuccessResponse202<T> {
+	status: 202;
+	success: true;
+	message: string;
+	data: T;
+}
+
+export interface SuccessResponse202<T> {
+	status: 202;
+	success: true;
+	message: string;
+	data: T;
+}
+
+// export interface SuccessResponse<T>
+// 	| SuccessResponse200<T>
+// 	| SuccessResponse201<T>
+// 	| SuccessResponse202<T>;
+
+export interface ErrorResponse {
+	status: 400 | 401 | 403 | 404 | 409 | 429 | 500 | 503;
+	success: false;
+	message: string;
+	data: null;
+}
+
+export interface ValidationErrorResponse {
+	status: 422;
+	success: false;
+	message: string;
+	errors: {
+		field: string;
+		message: string;
+	}[];
+}
+
+export interface PaginatedResponse<T> {
+	status: 200;
+	success: true;
+	message: string;
+	data: {
+		data: T[];
+		meta: {
+			page: number;
+			limit: number;
+			totalCount: number;
+		};
+	};
+}
+
+// ============================================
+// RESPONSE TOOLKIT
+// ============================================
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ResponseUtils {
+	/**
+	 * Create a success response with status 200
+	 */
+	static success<T>(
+		_data: T,
+		_message?: string,
+		_status?: 200,
+	): SuccessResponse200<T>;
+
+	/**
+	 * Create a success response with status 201
+	 */
+	static success<T>(
+		_data: T,
+		_message: string,
+		_status: 201,
+	): SuccessResponse201<T>;
+
+	/**
+	 * Create a success response with status 202
+	 */
+	static success<T>(
+		_data: T,
+		_message: string,
+		_status: 202,
+	): SuccessResponse202<T>;
+
 	/**
 	 * Create a success response
 	 * @param data - The response data
@@ -97,10 +168,26 @@ export class ResponseUtils {
 	static success<T>(
 		data: T,
 		message = "Success",
-		status = 200,
-	): SuccessResponse<T> {
+		status: 200 | 201 | 202 = 200,
+	): SuccessResponse200<T> | SuccessResponse201<T> | SuccessResponse202<T> {
+		if (status === 200) {
+			return {
+				status: 200,
+				success: true,
+				message,
+				data,
+			};
+		}
+		if (status === 201) {
+			return {
+				status: 201,
+				success: true,
+				message,
+				data,
+			};
+		}
 		return {
-			status,
+			status: 202,
 			success: true,
 			message,
 			data,
@@ -122,7 +209,7 @@ export class ResponseUtils {
 			totalCount: number;
 		},
 		message = "Data retrieved successfully",
-		status = 200,
+		status: 200 = 200,
 	): PaginatedResponse<T> {
 		return {
 			status,
@@ -140,7 +227,10 @@ export class ResponseUtils {
 	 * @param message - Error message
 	 * @param status - HTTP status code (default: 400)
 	 */
-	static error(message: string, status = 400): ErrorResponse {
+	static error(
+		message: string,
+		status: 400 | 401 | 403 | 404 | 409 | 429 | 500 | 503 = 400,
+	): ErrorResponse {
 		return {
 			status,
 			success: false,
@@ -158,7 +248,7 @@ export class ResponseUtils {
 	static validationError(
 		errors: { field: string; message: string }[],
 		message = "Validation failed",
-		status = 422,
+		status: 422 = 422,
 	): ValidationErrorResponse {
 		return {
 			status,
@@ -224,7 +314,7 @@ export class ResponseUtils {
 	static created<T>(
 		data: T,
 		message = "Resource created successfully",
-	): SuccessResponse<T> {
+	): SuccessResponse201<T> {
 		return this.success(data, message, 201);
 	}
 
@@ -243,7 +333,7 @@ export class ResponseUtils {
 	static accepted<T>(
 		data: T,
 		message = "Request accepted for processing",
-	): SuccessResponse<T> {
+	): SuccessResponse202<T> {
 		return this.success(data, message, 202);
 	}
 }
@@ -306,7 +396,7 @@ export const CommonResponseSchemas = {
 	}),
 };
 
-// Helper to create response schema with specific data type
+// Helper to create response schema with specific data interface
 export const createResponseSchema = (
 	dataSchema: TSchema,
 ): Record<number, TSchema> => ({
@@ -328,3 +418,99 @@ export const createPaginatedResponseSchema = (
 	422: ValidationErrorResponseSchema,
 	500: CommonResponseSchemas[500],
 });
+
+// ============================================
+// COMMON RESPONSE HELPER (like clean-hono)
+// ============================================
+
+interface CommonResponseOptions {
+	exclude?: number[];
+	include?: number[];
+}
+
+/**
+ * Generate OpenAPI response schemas for common HTTP status codes.
+ * Similar to clean-hono's commonResponse() - provides a single call to define
+ * all expected response schemas for a route.
+ *
+ * @param dataSchema - TypeBox schema for the success response data
+ * @param options - Configuration options
+ * @param options.exclude - Status codes to exclude from the response
+ * @param options.include - Only include these status codes (overrides exclude)
+ *
+ * @example
+ * // Include all standard responses
+ * response: commonResponse(UserSchema)
+ *
+ * // Only specific status codes
+ * response: commonResponse(UserSchema, { include: [200, 400, 422] })
+ *
+ * // Exclude certain codes
+ * response: commonResponse(t.Null(), { exclude: [201, 403, 404] })
+ */
+export const commonResponse = (
+	dataSchema: TSchema,
+	options: CommonResponseOptions = {},
+): Record<number, TSchema> => {
+	const { exclude = [], include } = options;
+
+	const shouldInclude = (code: number): boolean =>
+		!exclude.includes(code) && (!include || include.includes(code));
+
+	const result: Record<number, TSchema> = {};
+
+	// Success responses
+	if (shouldInclude(200)) result[200] = SuccessResponseSchema(dataSchema);
+	if (shouldInclude(201))
+		result[201] = t.Object({
+			status: t.Literal(201),
+			success: t.Literal(true),
+			message: t.String(),
+			data: dataSchema,
+		});
+
+	// Error responses
+	if (shouldInclude(400)) result[400] = CommonResponseSchemas[400];
+	if (shouldInclude(401)) result[401] = CommonResponseSchemas[401];
+	if (shouldInclude(403)) result[403] = CommonResponseSchemas[403];
+	if (shouldInclude(404)) result[404] = CommonResponseSchemas[404];
+	if (shouldInclude(409)) result[409] = CommonResponseSchemas[409];
+	if (shouldInclude(422)) result[422] = CommonResponseSchemas[422];
+	if (shouldInclude(429)) result[429] = CommonResponseSchemas[429];
+	if (shouldInclude(500)) result[500] = CommonResponseSchemas[500];
+	if (shouldInclude(503)) result[503] = CommonResponseSchemas[503];
+
+	return result;
+};
+
+/**
+ * Generate OpenAPI response schemas for paginated endpoints.
+ *
+ * @param itemSchema - TypeBox schema for individual items in the paginated list
+ * @param options - Configuration options (same as commonResponse)
+ *
+ * @example
+ * response: commonPaginatedResponse(UserListSchema)
+ * response: commonPaginatedResponse(UserListSchema, { exclude: [404] })
+ */
+export const commonPaginatedResponse = (
+	itemSchema: TSchema,
+	options: CommonResponseOptions = {},
+): Record<number, TSchema> => {
+	const { exclude = [], include } = options;
+
+	const shouldInclude = (code: number): boolean =>
+		!exclude.includes(code) && (!include || include.includes(code));
+
+	const result: Record<number, TSchema> = {};
+
+	if (shouldInclude(200)) result[200] = PaginatedResponseSchema(itemSchema);
+	if (shouldInclude(400)) result[400] = CommonResponseSchemas[400];
+	if (shouldInclude(401)) result[401] = CommonResponseSchemas[401];
+	if (shouldInclude(403)) result[403] = CommonResponseSchemas[403];
+	if (shouldInclude(404)) result[404] = CommonResponseSchemas[404];
+	if (shouldInclude(422)) result[422] = CommonResponseSchemas[422];
+	if (shouldInclude(500)) result[500] = CommonResponseSchemas[500];
+
+	return result;
+};
