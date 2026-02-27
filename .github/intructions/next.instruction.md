@@ -412,12 +412,22 @@ export default function RootLayout({ children }) {
 
 ### 8. Styling with Tailwind CSS and shadcn/ui
 
-Use Tailwind CSS utility classes and shadcn/ui components from `@repo/ui`:
+Use Tailwind CSS v4 utility classes and shadcn/ui components from `@repo/ui`.
+
+**Adding a new shared component** (run from `packages/ui/`):
+
+```bash
+cd packages/ui
+bunx shadcn@latest add <component-name>
+# Then export the new component from src/components/ui/index.ts
+```
+
+Do **not** add `@radix-ui/*` packages manually — the shadcn CLI manages them.
+Import `cn()` from `@repo/ui`, not `@repo/utils`.
 
 ```typescript
 // Using shadcn/ui components
-import { Button, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
-import { cn } from "@repo/utils";
+import { Button, Card, CardHeader, CardTitle, CardContent, cn } from "@repo/ui";
 import type { User } from "@repo/types";
 
 export function UserCard({ user }: { user: User }) {
@@ -433,7 +443,7 @@ export function UserCard({ user }: { user: User }) {
   );
 }
 
-// Custom component with Tailwind CSS
+// Custom component with Tailwind CSS — cn() is from @repo/ui
 export function CustomButton({
   children,
   variant = "default",

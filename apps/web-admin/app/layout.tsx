@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { AuthProvider } from "@/lib/context/auth-context";
 import { QueryProvider } from "@/lib/providers/query-provider";
+import { Toaster } from "@repo/ui";
 
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
 				<QueryProvider>
 					<AuthProvider>{children}</AuthProvider>
 				</QueryProvider>
+				<Toaster />
 			</body>
 		</html>
 	);

@@ -11,7 +11,37 @@ interface NavItem {
 	href: string;
 }
 
-const navItems: NavItem[] = [{ label: "Dashboard", href: "/dashboard" }];
+const mainNavItems: NavItem[] = [{ label: "Dashboard", href: "/dashboard" }];
+
+const settingsNavItems: NavItem[] = [
+	{ label: "Users", href: "/dashboard/settings/users" },
+	{ label: "Roles", href: "/dashboard/settings/roles" },
+	{ label: "Permissions", href: "/dashboard/settings/permissions" },
+];
+
+function NavLink({
+	item,
+	pathname,
+}: {
+	item: NavItem;
+	pathname: string;
+}): React.JSX.Element {
+	const isActive =
+		pathname === item.href || pathname.startsWith(item.href + "/");
+	return (
+		<Link
+			href={item.href}
+			className={cn(
+				"flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+				isActive
+					? "bg-primary text-primary-foreground"
+					: "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+			)}
+		>
+			{item.label}
+		</Link>
+	);
+}
 
 export function DashboardSidebar(): React.JSX.Element {
 	const pathname = usePathname();
@@ -24,19 +54,17 @@ export function DashboardSidebar(): React.JSX.Element {
 				</span>
 			</div>
 			<nav className="flex-1 space-y-1 p-4">
-				{navItems.map((item) => (
-					<Link
-						key={item.href}
-						href={item.href}
-						className={cn(
-							"flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-							pathname === item.href
-								? "bg-primary text-primary-foreground"
-								: "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-						)}
-					>
-						{item.label}
-					</Link>
+				{mainNavItems.map((item) => (
+					<NavLink key={item.href} item={item} pathname={pathname} />
+				))}
+
+				<Separator className="my-3" />
+
+				<p className="px-3 py-1 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+					Settings
+				</p>
+				{settingsNavItems.map((item) => (
+					<NavLink key={item.href} item={item} pathname={pathname} />
 				))}
 			</nav>
 			<Separator />

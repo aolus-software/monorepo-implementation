@@ -133,10 +133,10 @@ monorepo-implementation/
 │   │       ├── elysia/            # Elysia-specific types
 │   │       └── repository/        # Repository types
 │   │
-│   ├── ui/                        # Shared UI components
-│   │   ├── src/components/        # React components
-│   │   ├── tailwind.config.ts     # Tailwind config
-│   │   └── components.json        # shadcn/ui config
+│   ├── ui/                        # Shared UI components (shadcn/ui)
+│   │   ├── src/components/ui/     # shadcn component files
+│   │   ├── src/libs/utils.ts      # cn() utility
+│   │   └── components.json        # shadcn CLI config (Tailwind v4, monorepo paths)
 │   │
 │   └── utils/                     # Shared utility functions
 │       └── src/
@@ -259,13 +259,30 @@ function calculateDiscount(user: User): number {
 - Always use transactions for multi-step operations
 - Index frequently queried columns
 
-### Styling
+### Styling and UI Components
 
-- Use Tailwind CSS utility classes
-- Follow the `@repo/ui` component patterns
-- Use CSS variables for theming (defined in Tailwind config)
+- Use Tailwind CSS v4 utility classes (no `tailwind.config.js` — config is
+  CSS-only)
+- All shared UI components live in `packages/ui/src/components/ui/` (shadcn/ui
+  style)
+- Import UI components from `@repo/ui` — never directly from `@radix-ui/*`
+- Use `cn()` from `@repo/ui` for conditional classes
 - Keep styles colocated with components
-- Use `cn()` utility for conditional classes
+- Use CSS variables for theming (HSL custom properties defined in
+  `apps/*/app/globals.css`)
+
+#### Adding a new shadcn component
+
+```bash
+cd packages/ui
+bunx shadcn@latest add <component-name>
+```
+
+Then export the component from `packages/ui/src/components/ui/index.ts`.
+
+**Do NOT** manually add `@radix-ui/*` packages to `packages/ui/package.json` —
+the shadcn CLI manages those dependencies automatically. Configuration is in
+`packages/ui/components.json`.
 
 ## Naming Conventions
 
